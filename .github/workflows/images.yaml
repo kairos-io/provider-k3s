@@ -1,0 +1,37 @@
+on:
+  workflow_call:
+    inputs:
+      k3s-version:
+        type: string
+        required: true
+      base-image:
+        type: string
+        required: true
+      push:
+        type: boolean
+        default: false
+        required: false
+        description: If true the images will be published to the registry and signed with cosign
+    secrets:
+      QUAY_PASSWORD:
+        required: true
+      QUAY_USERNAME:
+        required: true
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - run: echo ${{ secrets.QUAY_PASSWORD }} | docker login -u ${{ secrets.QUAY_USERNAME }} --password-stdin quay.io
+        if: ${{ inputs.push }}
+      - run: earthly --ci --push=${{ inputs.push }} +docker --K3S_VERSION=${{ inputs.k3s-version }} --BASE_IMAGE=${{ inputs.base-image }}
+        with:
+          k3s-version: ${{ inputs.k3s-version }}
+          base-image: ${{ inputs.base-image }}
+      - run: earthly --ci +cosign --K3S_VERSION=${{ inputs.k3s-version }} --BASE_IMAGE=${{ inputs.base-image }}
+        if: ${{ inputs.push }}
+        with:
+          k3s-version: ${{ inputs.k3s-version }}
+          base-image: ${{ inputs.base-image }}

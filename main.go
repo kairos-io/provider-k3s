@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"path/filepath"
+	kyaml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -26,12 +27,17 @@ type K3sConfig struct {
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	k3sConfig := K3sConfig{
-		ClusterInit: cluster.Role == clusterplugin.RoleInit,
-		Token:       cluster.ClusterToken,
-		Server:      fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost),
+		Token:  cluster.ClusterToken,
+		Server: fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost),
 		TLSSan: []string{
 			cluster.ControlPlaneHost,
 		},
+	}
+
+	if cluster.Role == clusterplugin.RoleInit {
+		k3sConfig.ClusterInit = true
+		k3sConfig.Server = ""
+
 	}
 
 	systemName := serverSystemName
@@ -47,6 +53,9 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	var providerConfig bytes.Buffer
 	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
 
+	userOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
+	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
+
 	cfg := yip.YipConfig{
 		Name: "K3s C3OS Cluster Provider",
 		Stages: map[string][]yip.Stage{
@@ -57,13 +66,16 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 						{
 							Path:        filepath.Join(configurationPath, "90_userdata.yaml"),
 							Permissions: 0400,
-							Content:     cluster.Options,
+							Content:     string(userOptions),
 						},
 						{
 							Path:        filepath.Join(configurationPath, "99_userdata.yaml"),
 							Permissions: 0400,
-							Content:     providerConfig.String(),
+							Content:     string(options),
 						},
+					},
+					Commands: []string{
+						fmt.Sprintf("jq -rs 'reduce .[] as $item ({}; . * $item)' %s/*.yaml > /etc/rancher/k3s/config.yaml", configurationPath),
 					},
 				},
 				{

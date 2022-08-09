@@ -7,6 +7,7 @@ require (
 	github.com/mudler/yip v0.0.0-20220725150231-976737b2353c
 	github.com/sirupsen/logrus v1.8.1
 	gopkg.in/yaml.v2 v2.4.0
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
