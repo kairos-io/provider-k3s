@@ -8,6 +8,11 @@ ARG LUET_VERSION=0.32.4
 ARG GOLINT_VERSION=v1.46.2
 ARG GOLANG_VERSION=1.18
 
+ARG K3S_VERSION=latest
+ARG BASE_IMAGE_NAME=$(echo $BASE_IMAGE | grep -o [^/]*: | rev | cut -c2- | rev)
+ARG BASE_IMAGE_TAG=$(echo $BASE_IMAGE | grep -o :.* | cut -c2-)
+ARG K3S_VERSION_TAG=$(echo $K3S_VERSION | sed s/+/-/)
+
 build-cosign:
     FROM gcr.io/projectsigstore/cosign:v1.9.0
     SAVE ARTIFACT /ko-app/cosign cosign
@@ -54,11 +59,6 @@ lint:
     RUN golangci-lint run
 
 docker:
-    ARG K3S_VERSION=latest
-    ARG BASE_IMAGE_NAME=$(echo $BASE_IMAGE | grep -o [^/]*: | rev | cut -c2- | rev)
-    ARG BASE_IMAGE_TAG=$(echo $BASE_IMAGE | grep -o :.* | cut -c2-)
-    ARG K3S_VERSION_TAG=$(echo $K3S_VERSION | sed s/+/-/)
-
     DO +VERSION
     ARG VERSION=$(cat VERSION)
 
@@ -89,15 +89,30 @@ docker:
     SAVE IMAGE --push $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}_${VERSION}
 
 cosign:
-    ARG GITHUB_TOKEN
+    ARG --required ACTIONS_ID_TOKEN_REQUEST_TOKEN
+    ARG --required ACTIONS_ID_TOKEN_REQUEST_URL
 
-    FROM alpine
+    ARG --required REGISTRY
+    ARG --required REGISTRY_USER
+    ARG --required REGISTRY_PASSWORD
 
+    DO +VERSION
+    ARG VERSION=$(cat VERSION)
+
+    FROM docker
+
+    ENV ACTIONS_ID_TOKEN_REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
+    ENV ACTIONS_ID_TOKEN_REQUEST_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
+
+    ENV REGISTRY=${REGISTRY}
+    ENV REGISTRY_USER=${REGISTRY_USER}
+    ENV REGISTRY_PASSWORD=${REGISTRY_PASSWORD}
+
+    ENV COSIGN_EXPERIMENTAL=1
     COPY +build-cosign/cosign /usr/local/bin/
 
-    ENV GITHUB_TOKEN=${GITHUB_TOKEN}
-    ENV COSIGN_EXPERIMENTAL=true
+    RUN echo $REGISTRY_PASSWORD | docker login -u $REGISTRY_USER --password-stdin $REGISTRY
 
-    RUN cosign sign +docker/$IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}
-    RUN cosign sign +docker/$IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}
-    RUN cosign sign +docker/$IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}_${VERSION}
+    RUN cosign sign $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}
+    RUN cosign sign $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}
+    RUN cosign sign $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}_${VERSION}
