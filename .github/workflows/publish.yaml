@@ -20,6 +20,9 @@ jobs:
           - v1.23.9+k3s1
           - v1.22.11+k3s2
           - v1.21.14+k3s1
+        platform:
+          - linux/amd64
+          - linux/arm64
     env:
       REGISTRY: quay.io
       REGISTRY_USER: ${{ secrets.QUAY_USERNAME }}
@@ -33,6 +36,6 @@ jobs:
       - run: echo $REGISTRY_PASSWORD | docker login -u $REGISTRY_USER --password-stdin $REGISTRY
       - run: env | grep ACTIONS_ID_TOKEN_REQUEST > .env
       - run: env | grep REGISTRY >> .env
-      - run: earthly --ci --push +docker --K3S_VERSION=${{ matrix.k3s-version }} --BASE_IMAGE=${{ matrix.base-image }}
+      - run: earthly --ci --push --platform=${{ matrix.platform }} +docker --K3S_VERSION=${{ matrix.k3s-version }} --BASE_IMAGE=${{ matrix.base-image }}
       - run: earthly --ci +cosign --K3S_VERSION=${{ matrix.k3s-version }} --BASE_IMAGE=${{ matrix.base-image }}
 
