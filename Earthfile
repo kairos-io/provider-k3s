@@ -33,6 +33,8 @@ BUILD_GOLANG:
     ARG BIN
     ARG SRC
 
+    ENV CGO_ENABLED=0
+
     RUN go build -ldflags "-s -w" -o ${BIN} ./${SRC} && upx ${BIN}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
