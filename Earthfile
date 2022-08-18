@@ -49,16 +49,16 @@ VERSION:
 
     SAVE ARTIFACT VERSION VERSION
 
-build-provider:
-    FROM +go-deps
-    DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go
-
 lint:
     FROM golang:$GOLANG_VERSION
     RUN wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $GOLINT_VERSION
     WORKDIR /build
     COPY . .
     RUN golangci-lint run
+
+build-provider:
+    FROM +go-deps
+    DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go
 
 docker:
     DO +VERSION
@@ -118,3 +118,11 @@ cosign:
     RUN cosign sign $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}
     RUN cosign sign $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}
     RUN cosign sign $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}_${VERSION}
+
+docker-all-platforms:
+     BUILD --platform=linux/amd64 +docker
+     BUILD --platform=linux/arm64 +docker
+
+cosign-all-platforms:
+     BUILD --platform=linux/amd64 +cosign
+     BUILD --platform=linux/arm64 +cosign

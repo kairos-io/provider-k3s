@@ -83,6 +83,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 					If:   "[ -x /sbin/openrc-run ]",
 					Commands: []string{
 						fmt.Sprintf("rc-update add %s default >/dev/null", systemName),
+						fmt.Sprintf("service %s start", systemName),
 					},
 				},
 				{
