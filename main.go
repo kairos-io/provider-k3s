@@ -19,25 +19,26 @@ const (
 )
 
 type K3sConfig struct {
-	ClusterInit bool     `yaml:"cluster-init"`
-	Token       string   `yaml:"token"`
-	Server      string   `yaml:"server"`
-	TLSSan      []string `yaml:"tls-san"`
+	ClusterInit bool     `yaml:"cluster-init,omitempty"`
+	Token       string   `yaml:"token,omitempty"`
+	Server      string   `yaml:"server,omitempty"`
+	TLSSan      []string `yaml:"tls-san,omitempty"`
 }
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	k3sConfig := K3sConfig{
-		Token:  cluster.ClusterToken,
-		Server: fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost),
-		TLSSan: []string{
-			cluster.ControlPlaneHost,
-		},
+		Token: cluster.ClusterToken,
 	}
 
-	if cluster.Role == clusterplugin.RoleInit {
+	switch cluster.Role {
+	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
-		k3sConfig.Server = ""
-
+		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+	case clusterplugin.RoleControlPlane:
+		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
+		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+	case clusterplugin.RoleWorker:
+		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 	}
 
 	systemName := serverSystemName
