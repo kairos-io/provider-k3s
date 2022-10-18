@@ -1,7 +1,6 @@
 package api
 
 type K3sAgentConfig struct {
-	Config string `json:"config,omitempty" yaml:"config,omitempty"`
 
 	// Server to connect to
 	Server string `json:"server,omitempty" yaml:"server,omitempty"`

@@ -20,7 +20,7 @@ const (
 )
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
-	k3sConfig := api.K3sConfig{
+	k3sConfig := api.K3sServerConfig{
 		Token: cluster.ClusterToken,
 	}
 
