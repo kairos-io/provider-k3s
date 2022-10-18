@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/c3os-io/c3os/provider-k3s/api"
 	"github.com/c3os-io/c3os/sdk/clusterplugin"
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
@@ -18,27 +19,30 @@ const (
 	agentSystemName  = "k3s-agent"
 )
 
-type K3sConfig struct {
-	ClusterInit bool     `yaml:"cluster-init,omitempty"`
-	Token       string   `yaml:"token,omitempty"`
-	Server      string   `yaml:"server,omitempty"`
-	TLSSan      []string `yaml:"tls-san,omitempty"`
-}
-
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
-	k3sConfig := K3sConfig{
+	k3sConfig := api.K3sConfig{
 		Token: cluster.ClusterToken,
 	}
 
+	var userOptionConfig string
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+		userOptionConfig = cluster.Options
 	case clusterplugin.RoleControlPlane:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+		userOptionConfig = cluster.Options
 	case clusterplugin.RoleWorker:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
+		//Data received from upstream contains config for both control plane and worker. Thus, for worker, config is being filtered
+		//via unmarshal into agent config.
+		var agentCfg api.K3sAgentConfig
+		if err := yaml.Unmarshal([]byte(cluster.Options), &agentCfg); err == nil {
+			out, _ := yaml.Marshal(agentCfg)
+			userOptionConfig = string(out)
+		}
 	}
 
 	systemName := serverSystemName
@@ -46,15 +50,10 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		systemName = agentSystemName
 	}
 
-	// ensure we always have  a valid user config
-	if cluster.Options == "" {
-		cluster.Options = "{}"
-	}
-
 	var providerConfig bytes.Buffer
 	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
 
-	userOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
+	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
 
 	cfg := yip.YipConfig{
