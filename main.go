@@ -60,22 +60,6 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		systemName = agentSystemName
 	}
 
-	// ensure we always have  a valid user config
-	if cluster.Options == "" {
-		cluster.Options = "{}"
-	}
-
-	_config, _ := config.Scan(config.Directories(configScanDir...))
-
-	if _config != nil {
-		for _, e := range _config.Env {
-			pair := strings.SplitN(e, "=", 2)
-			if len(pair) >= 2 {
-				os.Setenv(pair[0], pair[1])
-			}
-		}
-	}
-
 	_config, _ := config.Scan(config.Directories(configScanDir...))
 
 	if _config != nil {
