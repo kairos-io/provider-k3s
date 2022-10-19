@@ -9,13 +9,14 @@ import (
 	"github.com/kairos-io/kairos/provider-k3s/api"
 	"github.com/kairos-io/kairos/sdk/clusterplugin"
 
+	"os"
+	"path/filepath"
+	"strings"
+
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"os"
-	"path/filepath"
 	kyaml "sigs.k8s.io/yaml"
-	"strings"
 )
 
 const (
