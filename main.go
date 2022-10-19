@@ -3,16 +3,20 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/c3os-io/c3os/sdk/clusterplugin"
+	"github.com/kairos-io/kairos/pkg/config"
+	"github.com/kairos-io/kairos/sdk/clusterplugin"
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	"os"
 	"path/filepath"
 	kyaml "sigs.k8s.io/yaml"
+	"strings"
 )
 
 const (
-	configurationPath = "/etc/rancher/k3s/config.d"
+	configurationPath       = "/etc/rancher/k3s/config.d"
+	containerdEnvConfigPath = "/etc/default"
 
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
@@ -24,6 +28,8 @@ type K3sConfig struct {
 	Server      string   `yaml:"server,omitempty"`
 	TLSSan      []string `yaml:"tls-san,omitempty"`
 }
+
+var configScanDir = []string{"/oem", "/usr/local/cloud-config", "/run/initramfs/live"}
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	k3sConfig := K3sConfig{
@@ -51,6 +57,17 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		cluster.Options = "{}"
 	}
 
+	_config, _ := config.Scan(config.Directories(configScanDir...))
+
+	if _config != nil {
+		for _, e := range _config.Env {
+			pair := strings.SplitN(e, "=", 2)
+			if len(pair) >= 2 {
+				os.Setenv(pair[0], pair[1])
+			}
+		}
+	}
+
 	var providerConfig bytes.Buffer
 	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
 
@@ -73,6 +90,11 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 							Path:        filepath.Join(configurationPath, "99_userdata.yaml"),
 							Permissions: 0400,
 							Content:     string(options),
+						},
+						{
+							Path:        filepath.Join(containerdEnvConfigPath, systemName),
+							Permissions: 0400,
+							Content:     containerdProxyEnv(),
 						},
 					},
 					Commands: []string{
@@ -104,6 +126,30 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	}
 
 	return cfg
+}
+
+func containerdProxyEnv() string {
+	var proxy []string
+	httpProxy := os.Getenv("HTTP_PROXY")
+	httpsProxy := os.Getenv("HTTPS_PROXY")
+	noProxy := os.Getenv("NO_PROXY")
+
+	if len(httpProxy) > 0 {
+		proxy = append(proxy, fmt.Sprintf("HTTP_PROXY=%s", httpProxy))
+		proxy = append(proxy, fmt.Sprintf("CONTAINERD_HTTP_PROXY=%s", httpProxy))
+	}
+
+	if len(httpsProxy) > 0 {
+		proxy = append(proxy, fmt.Sprintf("HTTPS_PROXY=%s", httpsProxy))
+		proxy = append(proxy, fmt.Sprintf("CONTAINERD_HTTPS_PROXY=%s", httpsProxy))
+	}
+
+	if len(noProxy) > 0 {
+		proxy = append(proxy, fmt.Sprintf("NO_PROXY=%s", noProxy))
+		proxy = append(proxy, fmt.Sprintf("CONTAINERD_NO_PROXY=%s", httpProxy))
+	}
+
+	return strings.Join(proxy, "\n")
 }
 
 func main() {
