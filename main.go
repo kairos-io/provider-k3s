@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/kairos-io/kairos/pkg/config"
 	"github.com/kairos-io/kairos/provider-k3s/api"
 	"github.com/kairos-io/kairos/sdk/clusterplugin"
