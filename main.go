@@ -2,16 +2,18 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/kairos-io/kairos/pkg/config"
 	"github.com/kairos-io/kairos/sdk/clusterplugin"
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"os"
-	"path/filepath"
 	kyaml "sigs.k8s.io/yaml"
-	"strings"
 )
 
 const (
@@ -20,6 +22,7 @@ const (
 
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
+	K8S_NO_PROXY     = ".svc,.svc.cluster,.svc.cluster.local"
 )
 
 type K3sConfig struct {
@@ -94,7 +97,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 						{
 							Path:        filepath.Join(containerdEnvConfigPath, systemName),
 							Permissions: 0400,
-							Content:     containerdProxyEnv(),
+							Content:     proxyEnv(userOptions),
 						},
 					},
 					Commands: []string{
@@ -128,11 +131,12 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	return cfg
 }
 
-func containerdProxyEnv() string {
+func proxyEnv(userOptions []byte) string {
 	var proxy []string
+
 	httpProxy := os.Getenv("HTTP_PROXY")
 	httpsProxy := os.Getenv("HTTPS_PROXY")
-	noProxy := os.Getenv("NO_PROXY")
+	noProxy := getNoProxy(userOptions)
 
 	if len(httpProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("HTTP_PROXY=%s", httpProxy))
@@ -146,10 +150,35 @@ func containerdProxyEnv() string {
 
 	if len(noProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("NO_PROXY=%s", noProxy))
-		proxy = append(proxy, fmt.Sprintf("CONTAINERD_NO_PROXY=%s", httpProxy))
+		proxy = append(proxy, fmt.Sprintf("CONTAINERD_NO_PROXY=%s", noProxy))
 	}
 
 	return strings.Join(proxy, "\n")
+}
+
+func getNoProxy(userOptions []byte) string {
+
+	noProxy := os.Getenv("NO_PROXY")
+
+	var data map[string]interface{}
+	err := json.Unmarshal(userOptions, &data)
+	if err != nil {
+		fmt.Println("error while unmarshalling user options", err)
+	}
+
+	if data != nil {
+		cluster_cidr := data["cluster-cidr"].(string)
+		service_cidr := data["service-cidr"].(string)
+
+		if len(cluster_cidr) > 0 {
+			noProxy = noProxy + "," + cluster_cidr
+		}
+		if len(service_cidr) > 0 {
+			noProxy = noProxy + "," + service_cidr
+		}
+	}
+	noProxy = noProxy + "," + K8S_NO_PROXY
+	return noProxy
 }
 
 func main() {
