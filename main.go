@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/kairos-io/kairos/pkg/config"
+	"github.com/kairos-io/kairos/provider-k3s/api"
 	"github.com/kairos-io/kairos/sdk/clusterplugin"
+
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -25,39 +28,37 @@ const (
 	K8S_NO_PROXY     = ".svc,.svc.cluster,.svc.cluster.local"
 )
 
-type K3sConfig struct {
-	ClusterInit bool     `yaml:"cluster-init,omitempty"`
-	Token       string   `yaml:"token,omitempty"`
-	Server      string   `yaml:"server,omitempty"`
-	TLSSan      []string `yaml:"tls-san,omitempty"`
-}
-
 var configScanDir = []string{"/oem", "/usr/local/cloud-config", "/run/initramfs/live"}
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
-	k3sConfig := K3sConfig{
+	k3sConfig := api.K3sServerConfig{
 		Token: cluster.ClusterToken,
 	}
 
+	var userOptionConfig string
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+		userOptionConfig = cluster.Options
 	case clusterplugin.RoleControlPlane:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+		userOptionConfig = cluster.Options
 	case clusterplugin.RoleWorker:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
+		//Data received from upstream contains config for both control plane and worker. Thus, for worker, config is being filtered
+		//via unmarshal into agent config.
+		var agentCfg api.K3sAgentConfig
+		if err := yaml.Unmarshal([]byte(cluster.Options), &agentCfg); err == nil {
+			out, _ := yaml.Marshal(agentCfg)
+			userOptionConfig = string(out)
+		}
 	}
 
 	systemName := serverSystemName
 	if cluster.Role == clusterplugin.RoleWorker {
 		systemName = agentSystemName
-	}
-
-	// ensure we always have  a valid user config
-	if cluster.Options == "" {
-		cluster.Options = "{}"
 	}
 
 	_config, _ := config.Scan(config.Directories(configScanDir...))
@@ -74,7 +75,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	var providerConfig bytes.Buffer
 	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
 
-	userOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
+	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
 
 	cfg := yip.YipConfig{

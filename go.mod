@@ -1,4 +1,4 @@
-module github.com/c3os-io/c3os/provider-k3s
+module github.com/kairos-io/kairos/provider-k3s
 
 go 1.18
 
