@@ -14,7 +14,7 @@ ARG BASE_IMAGE_TAG=$(echo $BASE_IMAGE | grep -o :.* | cut -c2-)
 ARG K3S_VERSION_TAG=$(echo $K3S_VERSION | sed s/+/-/)
 
 build-cosign:
-    FROM gcr.io/projectsigstore/cosign:v1.9.0
+    FROM gcr.io/projectsigstore/cosign:v1.13.1
     SAVE ARTIFACT /ko-app/cosign cosign
 
 go-deps:
