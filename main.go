@@ -77,9 +77,10 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
 
 	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
+	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
 
-	proxyValues := proxyEnv(userOptions)
+	proxyValues := proxyEnv(proxyOptions)
 
 	files := []yip.File{
 		{
@@ -140,12 +141,12 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	return cfg
 }
 
-func proxyEnv(userOptions []byte) string {
+func proxyEnv(proxyOptions []byte) string {
 	var proxy []string
 
 	httpProxy := os.Getenv("HTTP_PROXY")
 	httpsProxy := os.Getenv("HTTPS_PROXY")
-	noProxy := getNoProxy(userOptions)
+	noProxy := getNoProxy(proxyOptions)
 
 	if len(httpProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("HTTP_PROXY=%s", httpProxy))
@@ -165,13 +166,13 @@ func proxyEnv(userOptions []byte) string {
 	return strings.Join(proxy, "\n")
 }
 
-func getNoProxy(userOptions []byte) string {
+func getNoProxy(proxyOptions []byte) string {
 
 	noProxy := os.Getenv("NO_PROXY")
 
 	if len(noProxy) > 0 {
-		var data map[string]interface{}
-		err := json.Unmarshal(userOptions, &data)
+		data := make(map[string]interface{})
+		err := json.Unmarshal(proxyOptions, &data)
 		if err != nil {
 			fmt.Println("error while unmarshalling user options", err)
 		}
