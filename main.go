@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/kairos-io/kairos/pkg/config"
 	"github.com/kairos-io/kairos/provider-k3s/api"
 	"github.com/kairos-io/kairos/sdk/clusterplugin"
 
@@ -28,8 +26,6 @@ const (
 	agentSystemName  = "k3s-agent"
 	K8S_NO_PROXY     = ".svc,.svc.cluster,.svc.cluster.local"
 )
-
-var configScanDir = []string{"/oem", "/usr/local/cloud-config", "/run/initramfs/live"}
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	k3sConfig := api.K3sServerConfig{
@@ -62,23 +58,16 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		systemName = agentSystemName
 	}
 
-	_config, _ := config.Scan(config.Directories(configScanDir...))
-
-	if _config != nil {
-		for _, e := range _config.Env {
-			pair := strings.SplitN(e, "=", 2)
-			if len(pair) >= 2 {
-				os.Setenv(pair[0], pair[1])
-			}
-		}
-	}
-
 	var providerConfig bytes.Buffer
 	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
 
 	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
+
+	for key, value := range cluster.Env {
+		os.Setenv(key, value)
+	}
 
 	proxyValues := proxyEnv(proxyOptions)
 
