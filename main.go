@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -65,11 +64,9 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
 
-	for key, value := range cluster.Env {
-		os.Setenv(key, value)
-	}
-
-	proxyValues := proxyEnv(proxyOptions)
+	logrus.Infof("cluster.Env : %+v", cluster.Env)
+	proxyValues := proxyEnv(proxyOptions, cluster.Env)
+	logrus.Infof("proxyValues : %s", proxyValues)
 
 	files := []yip.File{
 		{
@@ -130,12 +127,12 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	return cfg
 }
 
-func proxyEnv(proxyOptions []byte) string {
+func proxyEnv(proxyOptions []byte, proxyMap map[string]string) string {
 	var proxy []string
 
-	httpProxy := os.Getenv("HTTP_PROXY")
-	httpsProxy := os.Getenv("HTTPS_PROXY")
-	noProxy := getNoProxy(proxyOptions)
+	httpProxy := proxyMap["HTTP_PROXY"]
+	httpsProxy := proxyMap["HTTPS_PROXY"]
+	noProxy := getNoProxy(proxyOptions, proxyMap["NO_PROXY"])
 
 	if len(httpProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("HTTP_PROXY=%s", httpProxy))
@@ -155,9 +152,7 @@ func proxyEnv(proxyOptions []byte) string {
 	return strings.Join(proxy, "\n")
 }
 
-func getNoProxy(proxyOptions []byte) string {
-
-	noProxy := os.Getenv("NO_PROXY")
+func getNoProxy(proxyOptions []byte, noProxy string) string {
 
 	if len(noProxy) > 0 {
 		data := make(map[string]interface{})
