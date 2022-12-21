@@ -86,6 +86,11 @@ docker:
     ENV OS_LABEL=${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}_${VERSION}
     RUN envsubst >/etc/os-release </usr/lib/os-release.tmpl
 
+    # add support for airgap to k3s provider
+    # ref: https://docs.k3s.io/installation/airgap
+    RUN mkdir -p /var/lib/rancher/k3s/agent/images
+    RUN curl -L --output /var/lib/rancher/k3s/agent/images/images.tar "https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s-airgap-images-amd64.tar"
+
     SAVE IMAGE --push $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${K3S_VERSION_TAG}
     SAVE IMAGE --push $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${K3S_VERSION_TAG}_${VERSION}
 
