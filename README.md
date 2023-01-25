@@ -1,4 +1,4 @@
-# C3OS K3S Cluster Plugin
+# Kairos K3S Cluster Plugin
 
 ---
 
