@@ -85,6 +85,7 @@ docker:
     ENV OS_VERSION=${K3S_VERSION_TAG}_${VERSION}
     ENV OS_LABEL=${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}_${VERSION}
     RUN envsubst >/etc/os-release </usr/lib/os-release.tmpl
+    COPY scripts/* /opt/
 
     SAVE IMAGE --push $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${K3S_VERSION_TAG}
     SAVE IMAGE --push $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${K3S_VERSION_TAG}_${VERSION}

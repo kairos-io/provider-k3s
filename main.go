@@ -24,6 +24,8 @@ const (
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
 	K8S_NO_PROXY     = ".svc,.svc.cluster,.svc.cluster.local"
+	BootBefore       = "boot.before"
+	LocalImagesPath  = "/opt/content/images"
 )
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
@@ -89,38 +91,57 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		})
 	}
 
+	stages := []yip.Stage{}
+
+	stages = append(stages, yip.Stage{
+		Name:  "Install K3s Configuration Files",
+		Files: files,
+		Commands: []string{
+			fmt.Sprintf("jq -s 'def flatten: reduce .[] as $i([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end); [.[] | to_entries] | flatten | reduce .[] as $dot ({}; .[$dot.key] += $dot.value)' %s/*.yaml > /etc/rancher/k3s/config.yaml", configurationPath),
+		},
+	})
+
+	var importStage yip.Stage
+	if cluster.ImportLocalImages {
+		if cluster.LocalImagesPath == "" {
+			cluster.LocalImagesPath = LocalImagesPath
+		}
+
+		importStage = yip.Stage{
+			Commands: []string{
+				"chmod +x /opt/import.sh",
+				fmt.Sprintf("/bin/sh import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
+			},
+		}
+		stages = append(stages, importStage)
+	}
+
+	stages = append(stages,
+		yip.Stage{
+			Name: "Enable OpenRC Services",
+			If:   "[ -x /sbin/openrc-run ]",
+			Commands: []string{
+				fmt.Sprintf("rc-update add %s default >/dev/null", systemName),
+				fmt.Sprintf("service %s start", systemName),
+			},
+		},
+		yip.Stage{
+			Name: "Enable Systemd Services",
+			If:   "[ -x /bin/systemctl ]",
+			Systemctl: yip.Systemctl{
+				Enable: []string{
+					systemName,
+				},
+				Start: []string{
+					systemName,
+				},
+			},
+		})
+
 	cfg := yip.YipConfig{
 		Name: "K3s Kairos Cluster Provider",
 		Stages: map[string][]yip.Stage{
-			"boot.before": {
-				{
-					Name:  "Install K3s Configuration Files",
-					Files: files,
-					Commands: []string{
-						fmt.Sprintf("jq -s 'def flatten: reduce .[] as $i([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end); [.[] | to_entries] | flatten | reduce .[] as $dot ({}; .[$dot.key] += $dot.value)' %s/*.yaml > /etc/rancher/k3s/config.yaml", configurationPath),
-					},
-				},
-				{
-					Name: "Enable OpenRC Services",
-					If:   "[ -x /sbin/openrc-run ]",
-					Commands: []string{
-						fmt.Sprintf("rc-update add %s default >/dev/null", systemName),
-						fmt.Sprintf("service %s start", systemName),
-					},
-				},
-				{
-					Name: "Enable Systemd Services",
-					If:   "[ -x /bin/systemctl ]",
-					Systemctl: yip.Systemctl{
-						Enable: []string{
-							systemName,
-						},
-						Start: []string{
-							systemName,
-						},
-					},
-				},
-			},
+			BootBefore: stages,
 		},
 	}
 
