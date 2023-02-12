@@ -77,6 +77,8 @@ docker:
         && INSTALL_K3S_SKIP_START="true" INSTALL_K3S_SKIP_ENABLE="true" bash installer.sh agent \
         && rm -rf installer.sh
 
+    RUN curl -sL https://github.com/etcd-io/etcd/releases/download/v3.5.5/etcd-v3.5.5-linux-amd64.tar.gz | sudo tar -zxv --strip-components=1 -C /usr/local/bin
+
     COPY +build-provider/agent-provider-k3s /system/providers/agent-provider-k3s
 
     ENV OS_ID=${BASE_IMAGE_NAME}-k3s
