@@ -110,7 +110,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		importStage = yip.Stage{
 			Commands: []string{
 				"chmod +x /opt/import.sh",
-				fmt.Sprintf("/bin/sh import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
+				fmt.Sprintf("/bin/sh /opt/import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
 			},
 		}
 		stages = append(stages, importStage)
