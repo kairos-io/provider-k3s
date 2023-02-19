@@ -109,6 +109,8 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 
 		importStage = yip.Stage{
 			Commands: []string{
+				"systemctl daemon-reload",
+				"systemctl enable --now containerd",
 				"chmod +x /opt/import.sh",
 				fmt.Sprintf("/bin/sh /opt/import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
 			},
