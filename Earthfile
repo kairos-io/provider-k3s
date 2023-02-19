@@ -78,8 +78,6 @@ docker:
         && rm -rf installer.sh
 
     RUN curl -sL https://github.com/etcd-io/etcd/releases/download/v3.5.5/etcd-v3.5.5-linux-amd64.tar.gz | sudo tar -zxv --strip-components=1 -C /usr/local/bin
-    RUN curl -sL https://github.com/containerd/containerd/releases/download/v1.6.18/containerd-1.6.18-linux-amd64.tar.gz | sudo tar -zxv --strip-components=1 -C /usr/local/bin
-    RUN curl -o /etc/systemd/system/containerd.service -sL https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
 
     COPY +build-provider/agent-provider-k3s /system/providers/agent-provider-k3s
 

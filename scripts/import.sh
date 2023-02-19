@@ -8,12 +8,13 @@ do
   for i in $(seq 10)
   do
     ctr -n k8s.io image import $tarfile --all-platforms
+    cp $tarfile /var/lib/rancher/k3s/agent/images/
     if [ "$?" -eq 0 ]; then
-      echo "Import successful: $tarfile (attempt $i)"
+      echo "Added: $tarfile (attempt $i) to /var/lib/rancher/k3s/agent/images/"
       break
     else
       if [ "$i" -eq 10 ]; then
-        echo "Import failed: $tarfile (attempt $i)"
+        echo "failed to add : $tarfile (attempt $i) to /var/lib/rancher/k3s/agent/images/"
       fi
     fi
   done
