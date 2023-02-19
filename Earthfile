@@ -87,7 +87,7 @@ docker:
     ENV OS_VERSION=${K3S_VERSION_TAG}_${VERSION}
     ENV OS_LABEL=${BASE_IMAGE_TAG}_${K3S_VERSION_TAG}_${VERSION}
     RUN envsubst >/etc/os-release </usr/lib/os-release.tmpl
-    COPY scripts/* /opt/
+    COPY scripts /opt/k3s/scripts
 
     # add support for airgap to k3s provider
     # ref: https://docs.k3s.io/installation/airgap
