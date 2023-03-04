@@ -59,7 +59,13 @@ lint:
 build-provider:
     FROM +go-deps
     DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go
-
+build-provider-package:
+    DO +VERSION
+    ARG VERSION=$(cat VERSION)
+    FROM scratch
+    COPY +build-provider/agent-provider-k3s /system/providers/agent-provider-k3s
+    COPY scripts /opt/k3s/scripts
+    SAVE IMAGE --push $IMAGE_REPOSITORY/provider-k3s:${VERSION}
 docker:
     DO +VERSION
     ARG VERSION=$(cat VERSION)
@@ -128,6 +134,10 @@ cosign:
 docker-all-platforms:
      BUILD --platform=linux/amd64 +docker
      BUILD --platform=linux/arm64 +docker
+
+provider-package-all-platforms:
+     BUILD --platform=linux/amd64 +build-provider-package
+     BUILD --platform=linux/arm64 +build-provider-package
 
 cosign-all-platforms:
      BUILD --platform=linux/amd64 +cosign
