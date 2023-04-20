@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kairos-io/kairos-sdk/clusterplugin"
 	"github.com/kairos-io/kairos/provider-k3s/api"
-	"github.com/kairos-io/kairos/sdk/clusterplugin"
 
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
