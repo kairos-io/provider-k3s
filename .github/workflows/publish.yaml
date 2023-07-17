@@ -17,6 +17,7 @@ jobs:
           - quay.io/kairos/core-ubuntu-20-lts:v2.2.1
           - quay.io/kairos/core-ubuntu-22-lts:v2.2.1
         k3s-version:
+          - v1.27.2+k3s1
           - v1.26.4+k3s1
           - v1.25.2+k3s1
           - v1.25.0+k3s1
