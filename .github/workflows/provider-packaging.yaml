@@ -33,4 +33,4 @@ jobs:
           registry: gcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }} 
-      - run: earthly --ci --push +provider-package-all-platforms --IMAGE_REPOSITORY=gcr.io/kairos-io
+      - run: earthly --ci --push +provider-package-all-platforms --IMAGE_REPOSITORY=gcr.io/spectro-dev-public/kairos-io

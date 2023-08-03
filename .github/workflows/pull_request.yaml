@@ -34,7 +34,7 @@ jobs:
           registry: gcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }} 
-      - run: earthly --ci  +provider-package-all-platforms --IMAGE_REPOSITORY=gcr.io/kairos-io
+      - run: earthly --ci  +provider-package-all-platforms --IMAGE_REPOSITORY=gcr.io/spectro-dev-public/kairos-io
   build:
     runs-on: ubuntu-latest
     permissions:
