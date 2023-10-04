@@ -39,7 +39,7 @@ Description=Marmot synchronizes the k8s state in SQLite between nodes in a two n
 TimeoutStartSec=0
 Restart=always
 
-ExecStart=/usr/local/bin/marmot -config /etc/two-node/marmot.toml
+ExecStart=/opt/spectrocloud/bin/marmot -config /etc/two-node/marmot.toml
 
 [Install]
 WantedBy=multi-user.target
