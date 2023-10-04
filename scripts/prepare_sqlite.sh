@@ -2,7 +2,7 @@
 
 set -e
 
-db_file="/etc/kubernetes/state.sqlite3"
+db_file="/var/lib/rancher/k3s/server/db/state.db"
 
 # SQL commands to create the 'kine' table
 sql_commands="

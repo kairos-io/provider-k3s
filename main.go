@@ -47,7 +47,7 @@ WantedBy=multi-user.target
 	marmotLeader = `
 # Path to target SQLite database
 seq_map_path="/etc/kubernetes/marmot-sm.cbor"
-db_path="/etc/kubernetes/state.sqlite3"
+db_path="/var/lib/rancher/k3s/server/db/state.db"
 node_id=1
 
 [nats]
@@ -63,7 +63,7 @@ format="console"
 	marmotFollowerTmpl = `
 # Path to target SQLite database
 seq_map_path="/etc/kubernetes/marmot-sm.cbor"
-db_path="/etc/kubernetes/state.sqlite3"
+db_path="/var/lib/rancher/k3s/server/db/state.db"
 
 [nats]
 # address of the nats leader
@@ -86,10 +86,16 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		Token: cluster.ClusterToken,
 	}
 
+	_, twoNode := cluster.Env["two-node"]
+
 	var userOptionConfig string
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
+		if twoNode {
+			// use sqlite, not etcd
+			k3sConfig.ClusterInit = false
+		}
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
 		userOptionConfig = cluster.Options
 	case clusterplugin.RoleControlPlane:
@@ -145,8 +151,6 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	}
 
 	stages := []yip.Stage{}
-
-	_, twoNode := cluster.Env["two-node"]
 
 	if twoNode {
 		marmotConfig := marmotLeader
