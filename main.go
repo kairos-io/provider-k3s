@@ -7,6 +7,7 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
 	"github.com/kairos-io/kairos/provider-k3s/api"
@@ -20,12 +21,64 @@ import (
 const (
 	configurationPath       = "/etc/rancher/k3s/config.d"
 	containerdEnvConfigPath = "/etc/default"
+	systemdConfigPath       = "/etc/systemd/system"
 
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
 	K8S_NO_PROXY     = ".svc,.svc.cluster,.svc.cluster.local"
 	BootBefore       = "boot.before"
 	LocalImagesPath  = "/opt/content/images"
+
+	twoNodeConfigPath = "/etc/two-node"
+	marmot            = "marmot"
+	marmotUnit        = `
+[Unit]
+Description=Marmot synchronizes the k8s state in SQLite between nodes in a two node topology
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+
+ExecStart=/usr/local/bin/marmot -config /etc/two-node/marmot.toml
+
+[Install]
+WantedBy=multi-user.target
+`
+	marmotLeader = `
+# Path to target SQLite database
+seq_map_path="/etc/kubernetes/marmot-sm.cbor"
+db_path="/etc/kubernetes/state.sqlite3"
+node_id=1
+
+[nats]
+server_config="/etc/two-node/nats.config"
+
+# Console STDOUT configurations
+[logging]
+# Configure console logging
+verbose=true
+# "console" | "json"
+format="console"
+`
+	marmotFollowerTmpl = `
+# Path to target SQLite database
+seq_map_path="/etc/kubernetes/marmot-sm.cbor"
+db_path="/etc/kubernetes/state.sqlite3"
+
+[nats]
+# address of the nats leader
+urls=[
+  "{{ .NatsLeaderUri }}"
+]
+
+# Console STDOUT configurations
+[logging]
+# Configure console logging
+verbose=true
+# "console" | "json"
+format="console"
+`
+	natsConfig = "listen: 0.0.0.0:4222"
 )
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
@@ -92,6 +145,63 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	}
 
 	stages := []yip.Stage{}
+
+	_, twoNode := cluster.Env["two-node"]
+
+	if twoNode {
+		marmotConfig := marmotLeader
+
+		if cluster.Role == clusterplugin.RoleWorker {
+			var buf bytes.Buffer
+			marmotArgs := map[string]interface{}{
+				"NatsLeaderUri": cluster.ControlPlaneHost,
+			}
+			tmpl, _ := template.New(marmot).Parse(marmotFollowerTmpl)
+			_ = tmpl.Execute(&buf, &marmotArgs)
+			marmotConfig = buf.String()
+		}
+
+		stages = append(stages, []yip.Stage{
+			{
+				Name: "Prepare two-node sqlite db",
+				Commands: []string{
+					"chmod +x /opt/k3s/scripts/prepare_sqlite.sh",
+					"/bin/sh /opt/k3s/scripts/prepare_sqlite.sh > /var/log/prepare_sqlite.log",
+				},
+			},
+			{
+				Name: "Prepare marmot config",
+				Files: []yip.File{
+					{
+						Path:        filepath.Join(twoNodeConfigPath, "marmot.toml"),
+						Permissions: 0644,
+						Content:     marmotConfig,
+					},
+				},
+			},
+			{
+				Name: "Enable marmot systemd service",
+				If:   "[ -x /bin/systemctl ]",
+				Files: []yip.File{
+					{
+						// add nats config irrespective of node role
+						Path:        filepath.Join(twoNodeConfigPath, "nats.config"),
+						Permissions: 0644,
+						Content:     natsConfig,
+					},
+					{
+						Path:        filepath.Join(systemdConfigPath, "marmot.service"),
+						Permissions: 0644,
+						Content:     marmotUnit,
+					},
+				},
+				Systemctl: yip.Systemctl{
+					Enable: []string{marmot},
+					Start:  []string{marmot},
+				},
+			},
+		}...)
+	}
 
 	stages = append(stages, yip.Stage{
 		Name:  "Install K3s Configuration Files",

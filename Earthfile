@@ -63,6 +63,7 @@ lint:
 build-provider:
     FROM +go-deps
     DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go
+
 build-provider-package:
     DO +VERSION
     ARG VERSION=$(cat VERSION)
@@ -70,6 +71,7 @@ build-provider-package:
     COPY +build-provider/agent-provider-k3s /system/providers/agent-provider-k3s
     COPY scripts /opt/k3s/scripts
     SAVE IMAGE --push $IMAGE_REPOSITORY/provider-k3s:${VERSION}
+
 docker:
     DO +VERSION
     ARG VERSION=$(cat VERSION)
@@ -91,6 +93,9 @@ docker:
 
     RUN curl -sL https://github.com/etcd-io/etcd/releases/download/v3.5.5/etcd-v3.5.5-linux-amd64.tar.gz | sudo tar -zxv --strip-components=1 -C /usr/local/bin
     COPY +build-provider/agent-provider-k3s /system/providers/agent-provider-k3s
+
+    RUN curl -sL https://github.com/maxpert/marmot/releases/download/v0.8.6/marmot-v0.8.6-linux-amd64-static.tar.gz | tar -zxv marmot -C /usr/local/bin
+    RUN apt update && apt install -y sqlite3
 
     ENV OS_ID=${BASE_IMAGE_NAME}-k3s
     ENV OS_NAME=$OS_ID:${BASE_IMAGE_TAG}
@@ -138,7 +143,7 @@ cosign:
 
 docker-all-platforms:
      BUILD --platform=linux/amd64 +docker
-     BUILD --platform=linux/arm64 +docker
+    #  BUILD --platform=linux/arm64 +docker
 
 provider-package-all-platforms:
      BUILD --platform=linux/amd64 +build-provider-package
