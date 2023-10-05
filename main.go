@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -153,7 +154,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	stages := []yip.Stage{}
 
 	if twoNode {
-		marmotConfig := marmotLeader
+		marmotConfig := base64.StdEncoding.EncodeToString([]byte(marmotLeader))
 
 		if cluster.Role == clusterplugin.RoleWorker {
 			var buf bytes.Buffer
@@ -162,7 +163,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 			}
 			tmpl, _ := template.New(marmot).Parse(marmotFollowerTmpl)
 			_ = tmpl.Execute(&buf, &marmotArgs)
-			marmotConfig = buf.String()
+			marmotConfig = base64.StdEncoding.EncodeToString(buf.Bytes())
 		}
 
 		stages = append(stages, []yip.Stage{
@@ -180,6 +181,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 						Path:        filepath.Join(twoNodeConfigPath, "marmot.toml"),
 						Permissions: 0644,
 						Content:     marmotConfig,
+						Encoding:    "b64",
 					},
 				},
 			},
@@ -196,7 +198,8 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 					{
 						Path:        filepath.Join(systemdConfigPath, "marmot.service"),
 						Permissions: 0644,
-						Content:     marmotUnit,
+						Content:     base64.StdEncoding.EncodeToString([]byte(marmotUnit)),
+						Encoding:    "b64",
 					},
 				},
 				Systemctl: yip.Systemctl{
