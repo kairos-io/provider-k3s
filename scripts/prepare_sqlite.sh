@@ -2,7 +2,9 @@
 
 set -e
 
-db_file="/var/lib/rancher/k3s/server/db/state.db"
+db_dir="/var/lib/rancher/k3s/server/db"
+
+mkdir -p $db_dir
 
 # SQL commands to create the 'kine' table
 sql_commands="
@@ -26,7 +28,7 @@ PRAGMA wal_checkpoint(TRUNCATE);
 "
 
 # Execute the SQL commands using sqlite3
-echo "$sql_commands" | sqlite3 "$db_file"
+echo "$sql_commands" | sqlite3 "$db_dir/state.db"
 
 # Print a success message
 echo "Table 'kine' created successfully"
