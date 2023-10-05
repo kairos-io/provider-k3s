@@ -159,7 +159,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		if cluster.Role == clusterplugin.RoleWorker {
 			var buf bytes.Buffer
 			marmotArgs := map[string]interface{}{
-				"NatsLeaderUri": cluster.ControlPlaneHost,
+				"NatsLeaderUri": fmt.Sprintf("nats://%s:4222", cluster.ControlPlaneHost),
 			}
 			tmpl, _ := template.New(marmot).Parse(marmotFollowerTmpl)
 			_ = tmpl.Execute(&buf, &marmotArgs)
