@@ -161,14 +161,14 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 
 		stages = append(stages, []yip.Stage{
 			{
-				Name: "Prepare two-node sqlite db",
+				Name: PrepareTwoNodeSqliteDb,
 				Commands: []string{
 					"chmod +x /opt/k3s/scripts/prepare_sqlite.sh",
 					"/bin/sh /opt/k3s/scripts/prepare_sqlite.sh > /var/log/prepare_sqlite.log",
 				},
 			},
 			{
-				Name: "Prepare marmot config",
+				Name: PrepareMarmotConfig,
 				Files: []yip.File{
 					{
 						Path:        filepath.Join(twoNodeConfigPath, "marmot.toml"),
@@ -179,7 +179,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 				},
 			},
 			{
-				Name: "Enable marmot systemd service",
+				Name: EnableMarmotSystemdService,
 				If:   "[ -x /bin/systemctl ]",
 				Files: []yip.File{
 					{
@@ -204,7 +204,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	}
 
 	stages = append(stages, yip.Stage{
-		Name:  "Install K3s Configuration Files",
+		Name:  InstallK3sConfigFiles,
 		Files: files,
 		Commands: []string{
 			fmt.Sprintf("jq -s 'def flatten: reduce .[] as $i([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end); [.[] | to_entries] | flatten | reduce .[] as $dot ({}; .[$dot.key] += $dot.value)' %s/*.yaml > /etc/rancher/k3s/config.yaml", configurationPath),
@@ -218,6 +218,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		}
 
 		importStage = yip.Stage{
+			Name: ImportK3sImages,
 			Commands: []string{
 				"chmod +x /opt/k3s/scripts/import.sh",
 				fmt.Sprintf("/bin/sh /opt/k3s/scripts/import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
@@ -228,7 +229,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 
 	stages = append(stages,
 		yip.Stage{
-			Name: "Enable OpenRC Services",
+			Name: EnableOpenRCServices,
 			If:   "[ -x /sbin/openrc-run ]",
 			Commands: []string{
 				fmt.Sprintf("rc-update add %s default >/dev/null", systemName),
@@ -236,7 +237,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 			},
 		},
 		yip.Stage{
-			Name: "Enable Systemd Services",
+			Name: EnableSystemdServices,
 			If:   "[ -x /bin/systemctl ]",
 			Systemctl: yip.Systemctl{
 				Enable: []string{
