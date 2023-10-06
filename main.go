@@ -8,7 +8,6 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
 	"github.com/kairos-io/kairos/provider-k3s/api"
@@ -61,7 +60,7 @@ verbose=true
 # "console" | "json"
 format="console"
 `
-	marmotFollowerTmpl = `
+	marmotFollower = `
 # Path to target SQLite database
 seq_map_path="/etc/kubernetes/marmot-sm.cbor"
 db_path="/var/lib/rancher/k3s/server/db/state.db"
@@ -69,7 +68,7 @@ db_path="/var/lib/rancher/k3s/server/db/state.db"
 [nats]
 # address of the nats leader
 urls=[
-  "{{ .NatsLeaderUri }}"
+  "nats://uninitialized:4222"
 ]
 
 # Console STDOUT configurations
@@ -157,13 +156,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		marmotConfig := base64.StdEncoding.EncodeToString([]byte(marmotLeader))
 
 		if cluster.Role == clusterplugin.RoleWorker {
-			var buf bytes.Buffer
-			marmotArgs := map[string]interface{}{
-				"NatsLeaderUri": "nats://uninitialized:4222",
-			}
-			tmpl, _ := template.New(marmot).Parse(marmotFollowerTmpl)
-			_ = tmpl.Execute(&buf, &marmotArgs)
-			marmotConfig = base64.StdEncoding.EncodeToString(buf.Bytes())
+			marmotConfig = base64.StdEncoding.EncodeToString([]byte(marmotFollower))
 		}
 
 		stages = append(stages, []yip.Stage{
