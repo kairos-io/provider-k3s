@@ -6,7 +6,7 @@ ARG IMAGE_REPOSITORY=quay.io/kairos
 
 ARG LUET_VERSION=0.34.0
 ARG GOLINT_VERSION=v1.52.2
-ARG GOLANG_VERSION=1.19.10
+ARG GOLANG_VERSION=1.21
 
 ARG K3S_VERSION=latest
 ARG BASE_IMAGE_NAME=$(echo $BASE_IMAGE | grep -o [^/]*: | rev | cut -c2- | rev)
@@ -22,11 +22,11 @@ build-cosign:
     SAVE ARTIFACT /ko-app/cosign cosign
 
 go-deps:
-    FROM gcr.io/spectro-dev-public/golang:1.19-debian
+    FROM gcr.io/spectro-images-public/golang:${GOLANG_VERSION}-alpine
     WORKDIR /build
     COPY go.mod go.sum ./
     RUN go mod download
-    RUN apt-get update
+    RUN apk update
     SAVE ARTIFACT go.mod AS LOCAL go.mod
     SAVE ARTIFACT go.sum AS LOCAL go.sum
 
@@ -37,9 +37,7 @@ BUILD_GOLANG:
     ARG BIN
     ARG SRC
 
-    ENV CGO_ENABLED=0
-
-    RUN go build -ldflags "-s -w" -o ${BIN} ./${SRC}
+    RUN go-build.sh -a -o ${BIN} ./${SRC}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
 VERSION:
