@@ -62,7 +62,7 @@ lint:
 
 build-provider:
     FROM +go-deps
-    DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go
+    DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=.
 
 build-provider-package:
     DO +VERSION
