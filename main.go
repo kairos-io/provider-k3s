@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
-	"github.com/kairos-io/kairos/provider-k3s/api"
-	twonode "github.com/kairos-io/kairos/provider-k3s/pkg/two-node"
+	"github.com/kairos-io/provider-k3s/api"
+	twonode "github.com/kairos-io/provider-k3s/pkg/two-node"
 
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
