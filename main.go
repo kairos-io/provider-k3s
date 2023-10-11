@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
 	"github.com/kairos-io/provider-k3s/api"
-	twonode "github.com/kairos-io/provider-k3s/pkg/two-node"
+	"github.com/kairos-io/provider-k3s/pkg/constants"
 
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
@@ -23,17 +22,12 @@ const (
 	configurationPath       = "/etc/rancher/k3s/config.d"
 	containerdEnvConfigPath = "/etc/default"
 	systemdConfigPath       = "/etc/systemd/system"
+	localImagesPath         = "/opt/content/images"
 
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
-	K8S_NO_PROXY     = ".svc,.svc.cluster,.svc.cluster.local"
-	BootBefore       = "boot.before"
-	LocalImagesPath  = "/opt/content/images"
 
-	EnableOpenRCServices  = "Enable OpenRC Services"
-	EnableSystemdServices = "Enable Systemd Services"
-	InstallK3sConfigFiles = "Install K3s Configuration Files"
-	ImportK3sImages       = "Import K3s Images"
+	k8sNoProxy = ".svc,.svc.cluster,.svc.cluster.local"
 )
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
@@ -59,8 +53,8 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		userOptionConfig = cluster.Options
 	case clusterplugin.RoleWorker:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
-		//Data received from upstream contains config for both control plane and worker. Thus, for worker, config is being filtered
-		//via unmarshal into agent config.
+		// Data received from upstream contains config for both control plane and worker. Thus, for worker,
+		// config is being filtered via unmarshal into agent config.
 		var agentCfg api.K3sAgentConfig
 		if err := yaml.Unmarshal([]byte(cluster.Options), &agentCfg); err == nil {
 			out, _ := yaml.Marshal(agentCfg)
@@ -107,59 +101,8 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 
 	stages := []yip.Stage{}
 
-	if twoNode {
-		marmotConfig := base64.StdEncoding.EncodeToString([]byte(twonode.MarmotLeader))
-
-		if cluster.Role == clusterplugin.RoleWorker {
-			marmotConfig = base64.StdEncoding.EncodeToString([]byte(twonode.MarmotFollower))
-		}
-
-		stages = append(stages, []yip.Stage{
-			{
-				Name: twonode.PrepareTwoNodeSqliteDb,
-				Commands: []string{
-					"chmod +x /opt/k3s/scripts/prepare_sqlite.sh",
-					"/bin/sh /opt/k3s/scripts/prepare_sqlite.sh > /var/log/prepare_sqlite.log",
-				},
-			},
-			{
-				Name: twonode.PrepareMarmotConfig,
-				Files: []yip.File{
-					{
-						Path:        filepath.Join(twonode.ConfigPath, "marmot.toml"),
-						Permissions: 0644,
-						Content:     marmotConfig,
-						Encoding:    "b64",
-					},
-				},
-			},
-			{
-				Name: twonode.EnableMarmotSystemdService,
-				If:   "[ -x /bin/systemctl ]",
-				Files: []yip.File{
-					{
-						// add nats config irrespective of node role
-						Path:        filepath.Join(twonode.ConfigPath, "nats.config"),
-						Permissions: 0644,
-						Content:     twonode.NatsConfig,
-					},
-					{
-						Path:        filepath.Join(systemdConfigPath, "marmot.service"),
-						Permissions: 0644,
-						Content:     base64.StdEncoding.EncodeToString([]byte(twonode.MarmotUnit)),
-						Encoding:    "b64",
-					},
-				},
-				Systemctl: yip.Systemctl{
-					Enable: []string{twonode.Marmot},
-					Start:  []string{twonode.Marmot},
-				},
-			},
-		}...)
-	}
-
 	stages = append(stages, yip.Stage{
-		Name:  InstallK3sConfigFiles,
+		Name:  constants.InstallK3sConfigFiles,
 		Files: files,
 		Commands: []string{
 			fmt.Sprintf("jq -s 'def flatten: reduce .[] as $i([]; if $i | type == \"array\" then . + ($i | flatten) else . + [$i] end); [.[] | to_entries] | flatten | reduce .[] as $dot ({}; .[$dot.key] += $dot.value)' %s/*.yaml > /etc/rancher/k3s/config.yaml", configurationPath),
@@ -169,11 +112,11 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	var importStage yip.Stage
 	if cluster.ImportLocalImages {
 		if cluster.LocalImagesPath == "" {
-			cluster.LocalImagesPath = LocalImagesPath
+			cluster.LocalImagesPath = localImagesPath
 		}
 
 		importStage = yip.Stage{
-			Name: ImportK3sImages,
+			Name: constants.ImportK3sImages,
 			Commands: []string{
 				"chmod +x /opt/k3s/scripts/import.sh",
 				fmt.Sprintf("/bin/sh /opt/k3s/scripts/import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
@@ -184,7 +127,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 
 	stages = append(stages,
 		yip.Stage{
-			Name: EnableOpenRCServices,
+			Name: constants.EnableOpenRCServices,
 			If:   "[ -x /sbin/openrc-run ]",
 			Commands: []string{
 				fmt.Sprintf("rc-update add %s default >/dev/null", systemName),
@@ -192,7 +135,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 			},
 		},
 		yip.Stage{
-			Name: EnableSystemdServices,
+			Name: constants.EnableSystemdServices,
 			If:   "[ -x /bin/systemctl ]",
 			Systemctl: yip.Systemctl{
 				Enable: []string{
@@ -207,7 +150,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	cfg := yip.YipConfig{
 		Name: "K3s Kairos Cluster Provider",
 		Stages: map[string][]yip.Stage{
-			BootBefore: stages,
+			"boot.before": stages,
 		},
 	}
 
@@ -272,7 +215,7 @@ func getDefaultNoProxy(proxyOptions []byte) string {
 			noProxy = noProxy + "," + serviceCIDR
 		}
 	}
-	noProxy = noProxy + "," + getNodeCIDR() + "," + K8S_NO_PROXY
+	noProxy = noProxy + "," + getNodeCIDR() + "," + k8sNoProxy
 
 	return noProxy
 }
