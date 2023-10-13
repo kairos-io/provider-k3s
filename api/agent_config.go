@@ -1,8 +1,8 @@
 package api
 
-import "strings"
-
-type StringSlice []string
+import (
+	"github.com/urfave/cli"
+)
 
 type K3sAgentConfig struct {
 
@@ -14,7 +14,7 @@ type K3sAgentConfig struct {
 
 	// NodeLabels  Registering and starting kubelet with set of labels
 	// +optional
-	NodeLabels StringSlice `json:"node-label,omitempty" yaml:"node-label,omitempty"`
+	NodeLabels cli.StringSlice `json:"node-label,omitempty" yaml:"node-label,omitempty"`
 
 	// NodeTaints Registering kubelet with set of taints
 	// +optional
@@ -43,9 +43,4 @@ type K3sAgentConfig struct {
 	// Debug
 	// +optional
 	Debug bool `json:"debug,omitempty"  yaml:"debug,omitempty"`
-}
-
-// String returns a readable representation of this value (for usage defaults)
-func (f *StringSlice) String() string {
-	return strings.Join(*f, ",")
 }

@@ -6,12 +6,14 @@ require (
 	github.com/kairos-io/kairos-sdk v0.0.2-0.20230414094028-0c9d2bd9e6ae
 	github.com/mudler/yip v1.0.0
 	github.com/sirupsen/logrus v1.9.0
+	github.com/urfave/cli v1.22.14
 	gopkg.in/yaml.v2 v2.4.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
 	github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/google/pprof v0.0.0-20230228050547-1710fef4ab10 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
@@ -25,6 +27,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.9.2 // indirect
 	github.com/onsi/gomega v1.27.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/twpayne/go-vfs v1.7.2 // indirect
 	github.com/twpayne/go-vfs/v4 v4.2.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
