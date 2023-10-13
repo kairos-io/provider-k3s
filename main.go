@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -51,6 +52,8 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		if err := yaml.Unmarshal([]byte(cluster.Options), &agentCfg); err == nil {
 			out, _ := yaml.Marshal(agentCfg)
 			userOptionConfig = string(out)
+		} else {
+			logrus.Printf("err--- %s", err)
 		}
 	}
 
@@ -226,6 +229,13 @@ func getNodeCIDR() string {
 }
 
 func main() {
+	f, err := os.OpenFile("/var/log/k3s-provider.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	logrus.SetFormatter(&logrus.TextFormatter{})
+	logrus.SetOutput(f)
+
 	plugin := clusterplugin.ClusterPlugin{
 		Provider: clusterProvider,
 	}
