@@ -1,5 +1,9 @@
 package api
 
+import "strings"
+
+type StringSlice []string
+
 type K3sAgentConfig struct {
 
 	// Server to connect to
@@ -10,7 +14,7 @@ type K3sAgentConfig struct {
 
 	// NodeLabels  Registering and starting kubelet with set of labels
 	// +optional
-	NodeLabels []string `json:"node-label,omitempty" yaml:"node-label,omitempty"`
+	NodeLabels StringSlice `json:"node-label,omitempty" yaml:"node-label,omitempty"`
 
 	// NodeTaints Registering kubelet with set of taints
 	// +optional
@@ -39,4 +43,9 @@ type K3sAgentConfig struct {
 	// Debug
 	// +optional
 	Debug bool `json:"debug,omitempty"  yaml:"debug,omitempty"`
+}
+
+// String returns a readable representation of this value (for usage defaults)
+func (f *StringSlice) String() string {
+	return strings.Join(*f, ",")
 }
