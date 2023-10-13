@@ -22,11 +22,11 @@ build-cosign:
     SAVE ARTIFACT /ko-app/cosign cosign
 
 go-deps:
-    FROM gcr.io/spectro-images-public/golang:${GOLANG_VERSION}-alpine
+    FROM gcr.io/spectro-dev-public/edge-native/golang:${GOLANG_VERSION}-debian
     WORKDIR /build
     COPY go.mod go.sum ./
     RUN go mod download
-    RUN apk update
+    RUN apt-get update
     SAVE ARTIFACT go.mod AS LOCAL go.mod
     SAVE ARTIFACT go.sum AS LOCAL go.sum
 
@@ -36,8 +36,9 @@ BUILD_GOLANG:
     COPY . ./
     ARG BIN
     ARG SRC
+    ENV CGO_ENABLED=0
 
-    RUN go-build.sh -a -o ${BIN} ./${SRC}
+    RUN go build -ldflags "-s -w" -o ${BIN} ./${SRC}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
 VERSION:
