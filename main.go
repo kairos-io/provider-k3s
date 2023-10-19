@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -23,7 +24,7 @@ const (
 
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
-	K8S_NO_PROXY     = ".svc,.svc.cluster,.svc.cluster.local"
+	K8sNoProxy       = ".svc,.svc.cluster,.svc.cluster.local"
 	BootBefore       = "boot.before"
 	LocalImagesPath  = "/opt/content/images"
 )
@@ -32,6 +33,9 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	k3sConfig := api.K3sServerConfig{
 		Token: cluster.ClusterToken,
 	}
+
+	logrus.Infof("current node role %s", cluster.Role)
+	logrus.Infof("received cluster options %s", cluster.Options)
 
 	var userOptionConfig string
 	switch cluster.Role {
@@ -45,12 +49,15 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		userOptionConfig = cluster.Options
 	case clusterplugin.RoleWorker:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
+
 		//Data received from upstream contains config for both control plane and worker. Thus, for worker, config is being filtered
 		//via unmarshal into agent config.
 		var agentCfg api.K3sAgentConfig
 		if err := yaml.Unmarshal([]byte(cluster.Options), &agentCfg); err == nil {
 			out, _ := yaml.Marshal(agentCfg)
 			userOptionConfig = string(out)
+		} else {
+			logrus.Fatalf("failed to un-marshal cluster options in k3s agent config %s", err)
 		}
 	}
 
@@ -66,9 +73,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
 
-	logrus.Infof("cluster.Env : %+v", cluster.Env)
-	proxyValues := proxyEnv(proxyOptions, cluster.Env)
-	logrus.Infof("proxyValues : %s", proxyValues)
+	logrus.Infof("received cluster env %+v", cluster.Env)
 
 	files := []yip.File{
 		{
@@ -83,7 +88,10 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		},
 	}
 
+	proxyValues := proxyEnv(proxyOptions, cluster.Env)
+
 	if len(proxyValues) > 0 {
+		logrus.Infof("setting proxy values %s", proxyValues)
 		files = append(files, yip.File{
 			Path:        filepath.Join(containerdEnvConfigPath, systemName),
 			Permissions: 0400,
@@ -91,7 +99,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		})
 	}
 
-	stages := []yip.Stage{}
+	var stages []yip.Stage
 
 	stages = append(stages, yip.Stage{
 		Name:  "Install K3s Configuration Files",
@@ -108,9 +116,10 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		}
 
 		importStage = yip.Stage{
+			Name: "Run K3s Import Images Script",
 			Commands: []string{
 				"chmod +x /opt/k3s/scripts/import.sh",
-				fmt.Sprintf("/bin/sh /opt/k3s/scripts/import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
+				fmt.Sprintf("/bin/sh /opt/k3s/scripts/import.sh %s > /var/log/k3s-import-images.log", cluster.LocalImagesPath),
 			},
 		}
 		stages = append(stages, importStage)
@@ -156,7 +165,9 @@ func proxyEnv(proxyOptions []byte, proxyMap map[string]string) string {
 	httpProxy := proxyMap["HTTP_PROXY"]
 	httpsProxy := proxyMap["HTTPS_PROXY"]
 	userNoProxy := proxyMap["NO_PROXY"]
+
 	defaultNoProxy := getDefaultNoProxy(proxyOptions)
+	logrus.Infof("setting default no proxy to %s", defaultNoProxy)
 
 	if len(httpProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("HTTP_PROXY=%s", httpProxy))
@@ -192,7 +203,7 @@ func getDefaultNoProxy(proxyOptions []byte) string {
 	data := make(map[string]interface{})
 	err := json.Unmarshal(proxyOptions, &data)
 	if err != nil {
-		fmt.Println("error while unmarshalling user options", err)
+		logrus.Fatalf("error while unmarshalling user options %s", err)
 	}
 
 	if data != nil {
@@ -206,7 +217,7 @@ func getDefaultNoProxy(proxyOptions []byte) string {
 			noProxy = noProxy + "," + serviceCIDR
 		}
 	}
-	noProxy = noProxy + "," + getNodeCIDR() + "," + K8S_NO_PROXY
+	noProxy = noProxy + "," + getNodeCIDR() + "," + K8sNoProxy
 
 	return noProxy
 }
@@ -226,6 +237,12 @@ func getNodeCIDR() string {
 }
 
 func main() {
+	f, err := os.OpenFile("/var/log/provider-k3s.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	logrus.SetOutput(f)
+
 	plugin := clusterplugin.ClusterPlugin{
 		Provider: clusterProvider,
 	}
