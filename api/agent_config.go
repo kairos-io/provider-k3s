@@ -9,7 +9,6 @@ type K3sAgentConfig struct {
 	KubeletArgs              []string `json:"kubelet-arg,omitempty"  yaml:"kubelet-arg,omitempty"`
 	KubeProxyArgs            []string `json:"kube-proxy-arg,omitempty"  yaml:"kube-proxy-arg,omitempty"`
 	NodeName                 string   `json:"node-name,omitempty"  yaml:"node-name,omitempty"`
-	NoFlannel                bool     `json:"no-flannel,omitempty"  yaml:"no-flannel,omitempty"`
 	Debug                    bool     `json:"debug,omitempty"  yaml:"debug,omitempty"`
 	WithNodeId               string   `json:"with-node-id,omitempty" yaml:"with-node-id,omitempty"`
 	NodeIP                   string   `json:"node-ip,omitempty" yaml:"node-ip,omitempty"`
