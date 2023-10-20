@@ -137,15 +137,12 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		yip.Stage{
 			Name: "Enable Systemd Services",
 			If:   "[ -x /bin/systemctl ]",
-			Systemctl: yip.Systemctl{
-				Enable: []string{
-					systemName,
-				},
-				Start: []string{
-					systemName,
-				},
+			Commands: []string{
+				fmt.Sprintf("systemctl enable %s", systemName),
+				fmt.Sprintf("systemctl restart %s", systemName),
 			},
-		})
+		},
+	)
 
 	cfg := yip.YipConfig{
 		Name: "K3s Kairos Cluster Provider",
