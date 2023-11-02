@@ -31,4 +31,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/kairos-io/kairos-sdk => github.com/TylerGillson/kairos-sdk v0.0.0-20231102174324-fee6669aa939
+replace github.com/kairos-io/kairos-sdk => github.com/TylerGillson/kairos-sdk v0.0.0-20231102230539-f5abf74ceec2
