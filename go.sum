@@ -1,3 +1,5 @@
+github.com/TylerGillson/kairos-sdk v0.0.0-20231102174324-fee6669aa939 h1:T3V5pDCJXFtmzVqxdb1eMV5piFVQhshqW9c15k+Zn/4=
+github.com/TylerGillson/kairos-sdk v0.0.0-20231102174324-fee6669aa939/go.mod h1:6Y9RGvKU/B99euFE32OYrabLLsSVjjemCfyRgiEHuKE=
 github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9 h1:xz6Nv3zcwO2Lila35hcb0QloCQsc38Al13RNEzWRpX4=
 github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9/go.mod h1:2wSM9zJkl1UQEFZgSd68NfCgRz1VL1jzy/RjCg+ULrs=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -34,8 +36,6 @@ github.com/itchyny/gojq v0.12.13 h1:IxyYlHYIlspQHHTE0f3cJF0NKDMfajxViuhBLnHd/QU=
 github.com/itchyny/gojq v0.12.13/go.mod h1:JzwzAqenfhrPUuwbmEz3nu3JQmFLlQTQMUcOdnu/Sf4=
 github.com/itchyny/timefmt-go v0.1.5 h1:G0INE2la8S6ru/ZI5JecgyzbbJNs5lG1RcBqa7Jm6GE=
 github.com/itchyny/timefmt-go v0.1.5/go.mod h1:nEP7L+2YmAbT2kZ2HfSs1d8Xtw9LY8D2stDBckWakZ8=
-github.com/kairos-io/kairos-sdk v0.0.16-0.20231030162246-196f133f2667 h1:dASw5xel1gMlQpwQaiK4Ost3HEPx2gHsn/MEhso9Lgo=
-github.com/kairos-io/kairos-sdk v0.0.16-0.20231030162246-196f133f2667/go.mod h1:Ew3NKFuXByu3Y3yGu8Q92M3oMqsXrg2VilouubdhYqA=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
