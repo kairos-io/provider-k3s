@@ -53,4 +53,4 @@ jobs:
       - uses: earthly/actions-setup@v1
         with:
           version: "v0.6.30"
-      - run: earthly --ci +docker-all-platforms --K3S_VERSION=${{ matrix.k3s-version }} --BASE_IMAGE=${{ matrix.base-image }}
+      - run: earthly --ci +docker-amd64-platforms --K3S_VERSION=${{ matrix.k3s-version }} --BASE_IMAGE=${{ matrix.base-image }}
