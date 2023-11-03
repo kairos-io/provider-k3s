@@ -1,5 +1,5 @@
-github.com/TylerGillson/kairos-sdk v0.0.0-20231102230539-f5abf74ceec2 h1:sSCUUgHpeMD9y13KMkBMM3Xgo1iPFSm+mMV6+2y+FI4=
-github.com/TylerGillson/kairos-sdk v0.0.0-20231102230539-f5abf74ceec2/go.mod h1:+fhVoCEA2hD7OFTmhDmy4pP3uC9q84OYhDa7irkEVWQ=
+github.com/TylerGillson/kairos-sdk v0.0.15-dev h1:nn/h+rHo7qqCj/Y4FYdpQ+WNpura2BBm4VtxkJGnCn8=
+github.com/TylerGillson/kairos-sdk v0.0.15-dev/go.mod h1:+fhVoCEA2hD7OFTmhDmy4pP3uC9q84OYhDa7irkEVWQ=
 github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9 h1:xz6Nv3zcwO2Lila35hcb0QloCQsc38Al13RNEzWRpX4=
 github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9/go.mod h1:2wSM9zJkl1UQEFZgSd68NfCgRz1VL1jzy/RjCg+ULrs=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
