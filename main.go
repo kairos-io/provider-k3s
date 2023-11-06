@@ -31,15 +31,16 @@ const (
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	k3sConfig := &api.K3sServerConfig{
-		ClusterInit: true,
-		Token:       cluster.ClusterToken,
+		Token: cluster.ClusterToken,
 	}
-
 	userOptionConfig := cluster.Options
 
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
-		// if provided, parse additional K3s server options
+		k3sConfig.ClusterInit = true
+		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+
+		// if provided, parse additional K3s server options (which may override the above settings)
 		if cluster.ProviderOptions != nil {
 			providerOpts, err := yaml.Marshal(cluster.ProviderOptions)
 			if err != nil {
@@ -49,7 +50,6 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 				logrus.Fatalf("failed to unmarshal cluster.ProviderOptions: %v", err)
 			}
 		}
-		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
 	case clusterplugin.RoleControlPlane:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
