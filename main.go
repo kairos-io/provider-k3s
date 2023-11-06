@@ -9,19 +9,18 @@ import (
 	"strings"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
-	"github.com/kairos-io/provider-k3s/api"
-	"github.com/kairos-io/provider-k3s/pkg/constants"
-
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	kyaml "sigs.k8s.io/yaml"
+
+	"github.com/kairos-io/provider-k3s/api"
+	"github.com/kairos-io/provider-k3s/pkg/constants"
 )
 
 const (
 	configurationPath       = "/etc/rancher/k3s/config.d"
 	containerdEnvConfigPath = "/etc/default"
-	systemdConfigPath       = "/etc/systemd/system"
 	localImagesPath         = "/opt/content/images"
 
 	serverSystemName = "k3s"
@@ -31,26 +30,29 @@ const (
 )
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
-	k3sConfig := api.K3sServerConfig{
+	k3sConfig := &api.K3sServerConfig{
 		Token: cluster.ClusterToken,
 	}
+	userOptionConfig := cluster.Options
 
-	_, twoNode := cluster.Env["two-node"]
-
-	var userOptionConfig string
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
-		if twoNode {
-			// use sqlite, not etcd
-			k3sConfig.ClusterInit = false
-		}
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
-		userOptionConfig = cluster.Options
+
+		// if provided, parse additional K3s server options (which may override the above settings)
+		if cluster.ProviderOptions != nil {
+			providerOpts, err := yaml.Marshal(cluster.ProviderOptions)
+			if err != nil {
+				logrus.Fatalf("failed to marshal cluster.ProviderOptions: %v", err)
+			}
+			if err := yaml.Unmarshal(providerOpts, k3sConfig); err != nil {
+				logrus.Fatalf("failed to unmarshal cluster.ProviderOptions: %v", err)
+			}
+		}
 	case clusterplugin.RoleControlPlane:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
-		userOptionConfig = cluster.Options
 	case clusterplugin.RoleWorker:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		// Data received from upstream contains config for both control plane and worker. Thus, for worker,
@@ -68,7 +70,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	}
 
 	var providerConfig bytes.Buffer
-	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
+	_ = yaml.NewEncoder(&providerConfig).Encode(k3sConfig)
 
 	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
