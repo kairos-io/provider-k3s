@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
-	"github.com/mcuadros/go-defaults"
 	yip "github.com/mudler/yip/pkg/schema"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -32,9 +31,9 @@ const (
 
 func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	k3sConfig := &api.K3sServerConfig{
-		Token: cluster.ClusterToken,
+		ClusterInit: true,
+		Token:       cluster.ClusterToken,
 	}
-	defaults.SetDefaults(k3sConfig)
 
 	userOptionConfig := cluster.Options
 
@@ -46,7 +45,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 			if err != nil {
 				logrus.Fatalf("failed to marshal cluster.ProviderOptions: %v", err)
 			}
-			if err := yaml.Unmarshal(providerOpts, &k3sConfig); err != nil {
+			if err := yaml.Unmarshal(providerOpts, k3sConfig); err != nil {
 				logrus.Fatalf("failed to unmarshal cluster.ProviderOptions: %v", err)
 			}
 		}
@@ -71,7 +70,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	}
 
 	var providerConfig bytes.Buffer
-	_ = yaml.NewEncoder(&providerConfig).Encode(&k3sConfig)
+	_ = yaml.NewEncoder(&providerConfig).Encode(k3sConfig)
 
 	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))

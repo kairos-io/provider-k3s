@@ -1,7 +1,7 @@
 package api
 
 type K3sServerConfig struct {
-	ClusterInit       bool     `yaml:"cluster-init,omitempty" default:"true"`
+	ClusterInit       bool     `yaml:"cluster-init,omitempty"`
 	DatastoreEndpoint string   `yaml:"datastore-endpoint,omitempty"`
 	DatastoreCaFile   string   `yaml:"datastore-cafile,omitempty"`
 	DatastoreCertFile string   `yaml:"datastore-certfile,omitempty"`

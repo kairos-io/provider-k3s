@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/kairos-io/kairos-sdk v0.0.16-0.20231030162246-196f133f2667
-	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mudler/yip v1.3.0
 	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/yaml.v3 v3.0.1
