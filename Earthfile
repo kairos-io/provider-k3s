@@ -36,8 +36,7 @@ BUILD_GOLANG:
     COPY . ./
     ARG BIN
     ARG SRC
-
-    RUN go-build.sh -a -o ${BIN} ./${SRC}
+    RUN go-build-static.sh -a -o ${BIN} ./${SRC}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
 VERSION:
