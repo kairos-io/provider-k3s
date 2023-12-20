@@ -13,7 +13,6 @@ type K3sAgentConfig struct {
 	WithNodeId               string   `json:"with-node-id,omitempty" yaml:"with-node-id,omitempty"`
 	NodeIP                   string   `json:"node-ip,omitempty" yaml:"node-ip,omitempty"`
 	NodeExternalIP           string   `json:"node-external-ip,omitempty" yaml:"node-external-ip,omitempty"`
-	FlannelBackend           string   `json:"flannel-backend,omitempty" yaml:"flannel-backend,omitempty"`
 	FlannelIface             string   `json:"flannel-iface,omitempty" yaml:"flannel-iface,omitempty"`
 	FlannelConf              string   `json:"flannel-conf,omitempty" yaml:"flannel-conf,omitempty"`
 	FlannelCniConfFile       string   `json:"flannel-cni-conf-file,omitempty" yaml:"flannel-cni-conf-file,omitempty"`
