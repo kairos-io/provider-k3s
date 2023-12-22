@@ -25,7 +25,7 @@ const (
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
 	K8sNoProxy       = ".svc,.svc.cluster,.svc.cluster.local"
-	NetworkAfter       = "network.after"
+	BootBefore = "boot.before"
 	LocalImagesPath  = "/opt/content/images"
 )
 
@@ -147,7 +147,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	cfg := yip.YipConfig{
 		Name: "K3s Kairos Cluster Provider",
 		Stages: map[string][]yip.Stage{
-			NetworkAfter: stages,
+			BootBefore: stages,
 		},
 	}
 
