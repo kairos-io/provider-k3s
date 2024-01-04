@@ -9,11 +9,11 @@ type K3sAgentConfig struct {
 	KubeletArgs              []string `json:"kubelet-arg,omitempty"  yaml:"kubelet-arg,omitempty"`
 	KubeProxyArgs            []string `json:"kube-proxy-arg,omitempty"  yaml:"kube-proxy-arg,omitempty"`
 	NodeName                 string   `json:"node-name,omitempty"  yaml:"node-name,omitempty"`
-	NoFlannel                bool     `json:"no-flannel,omitempty"  yaml:"no-flannel,omitempty"`
 	Debug                    bool     `json:"debug,omitempty"  yaml:"debug,omitempty"`
 	WithNodeId               string   `json:"with-node-id,omitempty" yaml:"with-node-id,omitempty"`
 	NodeIP                   string   `json:"node-ip,omitempty" yaml:"node-ip,omitempty"`
 	NodeExternalIP           string   `json:"node-external-ip,omitempty" yaml:"node-external-ip,omitempty"`
+	FlannelBackend           string   `json:"flannel-backend,omitempty" yaml:"flannel-backend,omitempty"`
 	FlannelIface             string   `json:"flannel-iface,omitempty" yaml:"flannel-iface,omitempty"`
 	FlannelConf              string   `json:"flannel-conf,omitempty" yaml:"flannel-conf,omitempty"`
 	FlannelCniConfFile       string   `json:"flannel-cni-conf-file,omitempty" yaml:"flannel-cni-conf-file,omitempty"`

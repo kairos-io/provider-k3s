@@ -37,7 +37,7 @@ BUILD_GOLANG:
     ARG BIN
     ARG SRC
     ENV CGO_ENABLED=0
-    RUN go-build.sh -a -o ${BIN} ./${SRC}
+    RUN go-build-static.sh -a -o ${BIN} ./${SRC}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
 VERSION:

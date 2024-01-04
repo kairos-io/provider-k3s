@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -35,6 +36,9 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	}
 	userOptionConfig := cluster.Options
 
+	logrus.Infof("current node role %s", cluster.Role)
+	logrus.Infof("received cluster options %s", cluster.Options)
+
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
@@ -61,6 +65,8 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		if err := yaml.Unmarshal([]byte(cluster.Options), &agentCfg); err == nil {
 			out, _ := yaml.Marshal(agentCfg)
 			userOptionConfig = string(out)
+		} else {
+			logrus.Fatalf("failed to un-marshal cluster options in k3s agent config %s", err)
 		}
 	}
 
@@ -76,9 +82,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
 
-	logrus.Infof("cluster.Env : %+v", cluster.Env)
-	proxyValues := proxyEnv(proxyOptions, cluster.Env)
-	logrus.Infof("proxyValues : %s", proxyValues)
+	logrus.Infof("received cluster env %+v", cluster.Env)
 
 	files := []yip.File{
 		{
@@ -93,7 +97,10 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		},
 	}
 
+	proxyValues := proxyEnv(proxyOptions, cluster.Env)
+
 	if len(proxyValues) > 0 {
+		logrus.Infof("setting proxy values %s", proxyValues)
 		files = append(files, yip.File{
 			Path:        filepath.Join(containerdEnvConfigPath, systemName),
 			Permissions: 0400,
@@ -101,7 +108,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		})
 	}
 
-	stages := []yip.Stage{}
+	var stages []yip.Stage
 
 	stages = append(stages, yip.Stage{
 		Name:  constants.InstallK3sConfigFiles,
@@ -121,7 +128,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 			Name: constants.ImportK3sImages,
 			Commands: []string{
 				"chmod +x /opt/k3s/scripts/import.sh",
-				fmt.Sprintf("/bin/sh /opt/k3s/scripts/import.sh %s > /var/log/import.log", cluster.LocalImagesPath),
+				fmt.Sprintf("/bin/sh /opt/k3s/scripts/import.sh %s > /var/log/k3s-import-images.log", cluster.LocalImagesPath),
 			},
 		}
 		stages = append(stages, importStage)
@@ -139,15 +146,12 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		yip.Stage{
 			Name: constants.EnableSystemdServices,
 			If:   "[ -x /bin/systemctl ]",
-			Systemctl: yip.Systemctl{
-				Enable: []string{
-					systemName,
-				},
-				Start: []string{
-					systemName,
-				},
+			Commands: []string{
+				fmt.Sprintf("systemctl enable %s", systemName),
+				fmt.Sprintf("systemctl restart %s", systemName),
 			},
-		})
+		},
+	)
 
 	cfg := yip.YipConfig{
 		Name: "K3s Kairos Cluster Provider",
@@ -167,7 +171,9 @@ func proxyEnv(proxyOptions []byte, proxyMap map[string]string) string {
 	httpProxy := proxyMap["HTTP_PROXY"]
 	httpsProxy := proxyMap["HTTPS_PROXY"]
 	userNoProxy := proxyMap["NO_PROXY"]
+
 	defaultNoProxy := getDefaultNoProxy(proxyOptions)
+	logrus.Infof("setting default no proxy to %s", defaultNoProxy)
 
 	if len(httpProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("HTTP_PROXY=%s", httpProxy))
@@ -203,7 +209,7 @@ func getDefaultNoProxy(proxyOptions []byte) string {
 	data := make(map[string]interface{})
 	err := json.Unmarshal(proxyOptions, &data)
 	if err != nil {
-		fmt.Println("error while unmarshalling user options", err)
+		logrus.Fatalf("error while unmarshalling user options %s", err)
 	}
 
 	if data != nil {
@@ -237,6 +243,12 @@ func getNodeCIDR() string {
 }
 
 func main() {
+	f, err := os.OpenFile("/var/log/provider-k3s.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	logrus.SetOutput(f)
+
 	plugin := clusterplugin.ClusterPlugin{
 		Provider: clusterProvider,
 	}
