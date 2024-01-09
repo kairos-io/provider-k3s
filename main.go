@@ -68,6 +68,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		if err := yaml.Unmarshal(providerOpts, k3sConfig); err != nil {
 			logrus.Fatalf("failed to unmarshal cluster.ProviderOptions: %v", err)
 		}
+		logrus.Infof("applied cluster provider options: %+v", cluster.ProviderOptions)
 	}
 
 	systemName := serverSystemName
