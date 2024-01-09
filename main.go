@@ -43,17 +43,6 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
-
-		// if provided, parse additional K3s server options (which may override the above settings)
-		if cluster.ProviderOptions != nil {
-			providerOpts, err := yaml.Marshal(cluster.ProviderOptions)
-			if err != nil {
-				logrus.Fatalf("failed to marshal cluster.ProviderOptions: %v", err)
-			}
-			if err := yaml.Unmarshal(providerOpts, k3sConfig); err != nil {
-				logrus.Fatalf("failed to unmarshal cluster.ProviderOptions: %v", err)
-			}
-		}
 	case clusterplugin.RoleControlPlane:
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
@@ -67,6 +56,17 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 			userOptionConfig = string(out)
 		} else {
 			logrus.Fatalf("failed to un-marshal cluster options in k3s agent config %s", err)
+		}
+	}
+
+	// if provided, parse additional K3s server options (which may override the above settings)
+	if cluster.ProviderOptions != nil {
+		providerOpts, err := yaml.Marshal(cluster.ProviderOptions)
+		if err != nil {
+			logrus.Fatalf("failed to marshal cluster.ProviderOptions: %v", err)
+		}
+		if err := yaml.Unmarshal(providerOpts, k3sConfig); err != nil {
+			logrus.Fatalf("failed to unmarshal cluster.ProviderOptions: %v", err)
 		}
 	}
 
