@@ -38,6 +38,14 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	logrus.Infof("current node role %s", cluster.Role)
 	logrus.Infof("received cluster options %s", cluster.Options)
 
+	// Temporary hack until we decide whether 2-node clusters have both nodes in the master pool.
+	// For now, one node is in the master pool and the other is in the worker pool.
+	if cluster.ProviderOptions != nil {
+		if v, ok := cluster.ProviderOptions["two-node"]; ok && v == "true" {
+			cluster.Role = clusterplugin.RoleInit
+		}
+	}
+
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
 		k3sConfig.ClusterInit = true
