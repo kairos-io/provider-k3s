@@ -71,12 +71,6 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		logrus.Infof("applied cluster provider options: %+v", cluster.ProviderOptions)
 	}
 
-	if v, ok := cluster.ProviderOptions["cluster-init"]; ok {
-		if v == "no" {
-			k3sConfig.ClusterInit = false
-		}
-	}
-
 	systemName := serverSystemName
 	if cluster.Role == clusterplugin.RoleWorker {
 		systemName = agentSystemName
@@ -88,6 +82,11 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
 	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
+
+	// override cluster-init value elided by yaml encoder
+	if v, ok := cluster.ProviderOptions["cluster-init"]; ok && v == "no" {
+		options = append(options[:len(options)-1], []byte(`,"cluster-init": false}`)...)
+	}
 
 	logrus.Infof("received cluster env %+v", cluster.Env)
 
