@@ -71,6 +71,12 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		logrus.Infof("applied cluster provider options: %+v", cluster.ProviderOptions)
 	}
 
+	if v, ok := cluster.ProviderOptions["cluster-init"]; ok {
+		if v == "no" {
+			k3sConfig.ClusterInit = false
+		}
+	}
+
 	systemName := serverSystemName
 	if cluster.Role == clusterplugin.RoleWorker {
 		systemName = agentSystemName
