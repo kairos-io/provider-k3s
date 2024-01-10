@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -76,17 +75,9 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		systemName = agentSystemName
 	}
 
-	var providerConfig bytes.Buffer
-	_ = yaml.NewEncoder(&providerConfig).Encode(k3sConfig)
-
 	userOptions, _ := kyaml.YAMLToJSON([]byte(userOptionConfig))
 	proxyOptions, _ := kyaml.YAMLToJSON([]byte(cluster.Options))
-	options, _ := kyaml.YAMLToJSON(providerConfig.Bytes())
-
-	// override cluster-init value elided by yaml encoder
-	if v, ok := cluster.ProviderOptions["cluster-init"]; ok && v == "no" {
-		options = append(options[:len(options)-1], []byte(`,"cluster-init": false}`)...)
-	}
+	options, _ := json.Marshal(k3sConfig)
 
 	logrus.Infof("received cluster env %+v", cluster.Env)
 
