@@ -38,8 +38,8 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	logrus.Infof("current node role %s", cluster.Role)
 	logrus.Infof("received cluster options %s", cluster.Options)
 
-	// Temporary hack until we decide whether 2-node clusters have both nodes in the master pool.
-	// For now, one node is in the master pool and the other is in the worker pool.
+	// For 2-node clusters, both master nodes must have RoleInit to avoid configuring k3sConfig.Server.
+	// This also ensures that both nodes have k3s enabled, not k3s-agent.
 	if cluster.ProviderOptions != nil {
 		if v, ok := cluster.ProviderOptions["two-node"]; ok && v == "true" {
 			cluster.Role = clusterplugin.RoleInit
@@ -54,6 +54,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
 	case clusterplugin.RoleWorker:
+		userOptionConfig = ""
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		// Data received from upstream contains config for both control plane and worker. Thus, for worker,
 		// config is being filtered via unmarshal into agent config.
