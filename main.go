@@ -38,11 +38,10 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	logrus.Infof("current node role %s", cluster.Role)
 	logrus.Infof("received cluster options %s", cluster.Options)
 
-	// For 2-node clusters, both master nodes must have RoleInit to avoid configuring k3sConfig.Server.
-	// This also ensures that both nodes have k3s enabled, not k3s-agent.
+	// Handle optional node role override
 	if cluster.ProviderOptions != nil {
-		if v, ok := cluster.ProviderOptions["two-node"]; ok && v == "true" {
-			cluster.Role = clusterplugin.RoleInit
+		if v, ok := cluster.ProviderOptions["node-role"]; ok {
+			cluster.Role = clusterplugin.Role(v)
 		}
 	}
 
