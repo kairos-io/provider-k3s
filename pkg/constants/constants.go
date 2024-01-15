@@ -11,6 +11,9 @@ const (
 type ProviderOption string
 
 const (
+	// Kairos node role for K3s. Valid values are 'init', 'controlplane', or 'worker'. Optional.
+	NodeRole ProviderOption = "node-role"
+
 	// If value == 'yes', provider-k3s will use etcd for its datastore.
 	// If value == 'no' and DatastoreEndpoint is not defined, the sqlite datastore will be used.
 	// If value == 'no' and DatastoreEndpoint is defined, a custom datastore will be used.
