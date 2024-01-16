@@ -26,6 +26,7 @@ const (
 	serverSystemName = "k3s"
 	agentSystemName  = "k3s-agent"
 
+	bootBefore = "boot.before"
 	k8sNoProxy = ".svc,.svc.cluster,.svc.cluster.local"
 )
 
@@ -37,13 +38,6 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 
 	logrus.Infof("current node role %s", cluster.Role)
 	logrus.Infof("received cluster options %s", cluster.Options)
-
-	// Handle optional node role override
-	if cluster.ProviderOptions != nil {
-		if v, ok := cluster.ProviderOptions["node-role"]; ok {
-			cluster.Role = clusterplugin.Role(v)
-		}
-	}
 
 	switch cluster.Role {
 	case clusterplugin.RoleInit:
@@ -161,7 +155,7 @@ func clusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	cfg := yip.YipConfig{
 		Name: "K3s Kairos Cluster Provider",
 		Stages: map[string][]yip.Stage{
-			"boot.before": stages,
+			bootBefore: stages,
 		},
 	}
 
