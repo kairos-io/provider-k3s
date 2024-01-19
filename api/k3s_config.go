@@ -10,4 +10,5 @@ type K3sServerConfig struct {
 	DatastoreCaFile   string   `yaml:"datastore-cafile,omitempty" json:"datastore-cafile,omitempty"`
 	DatastoreCertFile string   `yaml:"datastore-certfile,omitempty" json:"datastore-certfile,omitempty"`
 	DatastoreKeyFile  string   `yaml:"datastore-keyfile,omitempty" json:"datastore-keyfile,omitempty"`
+	BindAddress       string   `yaml:"bind-address,omitempty" json:"bind-address,omitempty"`
 }

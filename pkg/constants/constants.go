@@ -11,6 +11,9 @@ const (
 type ProviderOption string
 
 const (
+	// K3s bind address
+	BindAddress ProviderOption = "bind-address"
+
 	// If value == 'yes', provider-k3s will use etcd for its datastore.
 	// If value == 'no' and DatastoreEndpoint is not defined, the sqlite datastore will be used.
 	// If value == 'no' and DatastoreEndpoint is defined, a custom datastore will be used.
