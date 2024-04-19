@@ -27,8 +27,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/twpayne/go-vfs v1.7.2 // indirect
 	github.com/twpayne/go-vfs/v4 v4.2.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 // indirect
 )
