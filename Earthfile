@@ -36,6 +36,7 @@ BUILD_GOLANG:
     COPY . ./
     ARG BIN
     ARG SRC
+    ENV CGO_ENABLED=0
     RUN go-build-static.sh -a -o ${BIN} ./${SRC}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
@@ -60,6 +61,7 @@ lint:
 build-provider:
     FROM +go-deps
     DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go
+
 build-provider-package:
     DO +VERSION
     ARG VERSION=$(cat VERSION)
@@ -67,6 +69,7 @@ build-provider-package:
     COPY +build-provider/agent-provider-k3s /system/providers/agent-provider-k3s
     COPY scripts /opt/k3s/scripts
     SAVE IMAGE --push $IMAGE_REPOSITORY/provider-k3s:${VERSION}
+
 docker:
     DO +VERSION
     ARG VERSION=$(cat VERSION)
