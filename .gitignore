@@ -18,3 +18,4 @@ build/
 *.out
 
 .local
+.DS_Store
