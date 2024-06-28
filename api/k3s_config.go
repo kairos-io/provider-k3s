@@ -1,8 +1,7 @@
 package api
 
 type K3sServerConfig struct {
-	// ClusterInit must not have an omitempty tag, otherwise it is elided by JSON/YAML encoders when false.
-	ClusterInit       bool     `yaml:"cluster-init" json:"cluster-init"`
+	ClusterInit       bool     `yaml:"cluster-init,omitempty" json:"cluster-init,omitempty"`
 	Token             string   `yaml:"token,omitempty" json:"token,omitempty"`
 	Server            string   `yaml:"server,omitempty" json:"server,omitempty"`
 	TLSSan            []string `yaml:"tls-san,omitempty" json:"tls-san,omitempty"`
