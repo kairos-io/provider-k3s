@@ -34,21 +34,15 @@ func ClusterProvider(cluster clusterplugin.Cluster) yip.YipConfig {
 	logrus.Infof("received cluster env %+v", cluster.Env)
 	logrus.Infof("received cluster options %s", cluster.Options)
 
-	options, proxyOptions, userOptions := parseOptions(cluster)
-
 	systemName := serverSystemName
 	if cluster.Role == clusterplugin.RoleWorker {
 		systemName = agentSystemName
 	}
 
-	files := parseFiles(cluster, options, proxyOptions, userOptions, systemName)
-
-	stages := parseStages(cluster, files, systemName)
-
 	cfg := yip.YipConfig{
 		Name: "K3s Kairos Cluster Provider",
 		Stages: map[string][]yip.Stage{
-			bootBefore: stages,
+			bootBefore: parseStages(cluster, parseFiles(cluster, systemName), systemName),
 		},
 	}
 
@@ -110,7 +104,9 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 	return options, proxyOptions, userOptions
 }
 
-func parseFiles(cluster clusterplugin.Cluster, options, proxyOptions, userOptions []byte, systemName string) []yip.File {
+func parseFiles(cluster clusterplugin.Cluster, systemName string) []yip.File {
+	options, proxyOptions, userOptions := parseOptions(cluster)
+
 	files := []yip.File{
 		{
 			Path:        filepath.Join(configurationPath, "90_userdata.yaml"),
