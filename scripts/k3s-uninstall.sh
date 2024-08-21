@@ -2,7 +2,10 @@
 set -x
 [ $(id -u) -eq 0 ] || exec sudo $0 $@
 
-. /etc/spectro/environment
+# Load custom environment variables from /etc/spectro/environment if it exists
+if [ -f /etc/spectro/environment ]; then
+    . /etc/spectro/environment
+fi
 
 ${STYLUS_ROOT}/opt/k3s/scripts/k3s-killall.sh
 
