@@ -29,3 +29,8 @@ const (
 	// TLS key file used for client certificate based authentication to your datastore.
 	DatastoreKeyFile string = "datastore-keyfile"
 )
+
+const (
+	ClusterRootPath         = "cluster_root_path"
+	RunSystemdSystemDir = "/run/systemd/system"
+)
