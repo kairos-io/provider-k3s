@@ -47,7 +47,7 @@ VERSION:
 
     COPY . ./
 
-    RUN echo $(git describe --exact-match --tags || "v0.0.0-$(git rev-parse --short=8 HEAD)") > VERSION
+    RUN echo $(git describe --exact-match --tags || echo "v0.0.0-$(git rev-parse --short=8 HEAD)") > VERSION
 
     SAVE ARTIFACT VERSION VERSION
 
