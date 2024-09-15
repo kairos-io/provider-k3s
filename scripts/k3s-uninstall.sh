@@ -39,7 +39,7 @@ for cmd in kubectl crictl ctr; do
     fi
 done
 
-rm -rf ${STYLUS_ROOT}/etc/rancher/k3s
+rm -rf ${STYLUS_ROOT}/etc/rancher
 rm -rf /run/k3s
 rm -rf /run/flannel
 rm -rf ${STYLUS_ROOT}/var/lib/rancher
