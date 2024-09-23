@@ -1,8 +1,10 @@
 package provider
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+
 	"net"
 	"path/filepath"
 	"strings"
@@ -13,9 +15,16 @@ import (
 	"gopkg.in/yaml.v3"
 	kyaml "sigs.k8s.io/yaml"
 
+	_ "embed"
+	"text/template"
+
 	"github.com/kairos-io/provider-k3s/api"
 	"github.com/kairos-io/provider-k3s/pkg/constants"
+	"github.com/kairos-io/provider-k3s/pkg/types"
 )
+
+//go:embed mount.tmpl
+var mountTemplate string
 
 const (
 	configurationPath       = "/etc/rancher/k3s/config.d"
@@ -81,7 +90,7 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 	options, _ := json.Marshal(k3sConfig)
 
 	// if provided, parse additional K3s server options (which may override the above settings)
-	if cluster.ProviderOptions != nil && len(cluster.ProviderOptions) > 0 {
+	if len(cluster.ProviderOptions) > 0 {
 		logrus.Infof("applying cluster provider options: %+v", cluster.ProviderOptions)
 
 		providerOpts, err := yaml.Marshal(cluster.ProviderOptions)
@@ -134,8 +143,54 @@ func parseFiles(cluster clusterplugin.Cluster, systemName string) []yip.File {
 	return files
 }
 
+func rootPathMountStage(rootPath string) yip.Stage {
+	mps := []types.MountPoint{
+		{
+			Name:   "etc-rancher",
+			Source: filepath.Join(rootPath, "etc/rancher"),
+			Target: "/etc/rancher",
+		},
+		{
+			Name:   "var-lib-rancher",
+			Source: filepath.Join(rootPath, "var/lib/rancher"),
+			Target: "/var/lib/rancher",
+		},
+	}
+
+	stage := yip.Stage{
+		Name: "Mount K3s data, conf directories",
+	}
+	for _, mp := range mps {
+		stage.Files = append(stage.Files, yip.File{
+			Path:        filepath.Join(constants.RunSystemdSystemDir, fmt.Sprintf("%s.mount", mp.Name)),
+			Permissions: 0644,
+			Content:     parseMountUnitFile(mp),
+		})
+
+		stage.Commands = append(stage.Commands,
+			fmt.Sprintf("mkdir -p %s", mp.Source),
+			fmt.Sprintf("mkdir -p %s", mp.Target),
+			fmt.Sprintf("systemctl enable --now %s.mount", mp.Name),
+		)
+	}
+
+	return stage
+}
+
+func parseMountUnitFile(mp types.MountPoint) string {
+	mount, _ := template.New("mount").Parse(mountTemplate)
+	var buf bytes.Buffer
+	_ = mount.Execute(&buf, mp)
+	return buf.String()
+}
+
 func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName string) []yip.Stage {
 	var stages []yip.Stage
+	clusterRootPath := getClusterRootPath(cluster)
+
+	if len(clusterRootPath) > 0 && clusterRootPath != "/" {
+		stages = append(stages, rootPathMountStage(clusterRootPath))
+	}
 
 	stages = append(stages, yip.Stage{
 		Name:  constants.InstallK3sConfigFiles,
@@ -152,8 +207,8 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 		importStage := yip.Stage{
 			Name: constants.ImportK3sImages,
 			Commands: []string{
-				"chmod +x /opt/k3s/scripts/import.sh",
-				fmt.Sprintf("/bin/sh /opt/k3s/scripts/import.sh %s > /var/log/k3s-import-images.log", cluster.LocalImagesPath),
+				fmt.Sprintf("chmod +x %s/opt/k3s/scripts/import.sh", clusterRootPath),
+				fmt.Sprintf("/bin/sh %s/opt/k3s/scripts/import.sh %s > /var/log/k3s-import-images.log", clusterRootPath, filepath.Join(clusterRootPath, cluster.LocalImagesPath)),
 			},
 		}
 		stages = append(stages, importStage)
@@ -258,4 +313,8 @@ func getNodeCIDR() string {
 		}
 	}
 	return result
+}
+
+func getClusterRootPath(cluster clusterplugin.Cluster) string {
+	return cluster.ProviderOptions[constants.ClusterRootPath]
 }
