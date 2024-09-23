@@ -6,10 +6,6 @@ repos:
   - repo: https://github.com/tekwizely/pre-commit-golang
     rev: v1.0.0-rc.1
     hooks:
-      - id: my-cmd-repo
-        name: go-work-sync
-        alias: go-work-sync
-        args: [go, work, sync]
       - id: go-mod-tidy
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.61.0

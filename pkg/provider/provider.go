@@ -90,7 +90,7 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 	options, _ := json.Marshal(k3sConfig)
 
 	// if provided, parse additional K3s server options (which may override the above settings)
-	if cluster.ProviderOptions != nil && len(cluster.ProviderOptions) > 0 {
+	if len(cluster.ProviderOptions) > 0 {
 		logrus.Infof("applying cluster provider options: %+v", cluster.ProviderOptions)
 
 		providerOpts, err := yaml.Marshal(cluster.ProviderOptions)
