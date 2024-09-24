@@ -137,13 +137,13 @@ cosign:
     RUN cosign sign $IMAGE_REPOSITORY/${BASE_IMAGE_NAME}-k3s:${K3S_VERSION_TAG}_${VERSION}
 
 docker-all-platforms:
-     BUILD --platform=linux/amd64 +docker
-     BUILD --platform=linux/arm64 +docker
+    BUILD --platform=linux/amd64 +docker
+    BUILD --platform=linux/arm64 +docker
 
 provider-package-all-platforms:
-     BUILD --platform=linux/amd64 +build-provider-package
-     BUILD --platform=linux/arm64 +build-provider-package
+    BUILD --platform=linux/amd64 +build-provider-package
+    BUILD --platform=linux/arm64 +build-provider-package
 
 cosign-all-platforms:
-     BUILD --platform=linux/amd64 +cosign
-     BUILD --platform=linux/arm64 +cosign
+    BUILD --platform=linux/amd64 +cosign
+    BUILD --platform=linux/arm64 +cosign
