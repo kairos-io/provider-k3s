@@ -34,7 +34,15 @@ func HandleClusterReset(event *pluggable.Event) pluggable.EventResponse {
 	}
 
 	clusterRootPath := getClusterRootPath(*config.Cluster)
-	cmd := exec.Command("/bin/sh", "-c", filepath.Join(clusterRootPath, "/opt/k3s/scripts", "kube-reset.sh"))
+
+	var uninstallScript string
+	if config.Cluster.Role == clusterplugin.RoleWorker {
+		uninstallScript = "k3s-agent-uninstall.sh"
+	} else {
+		uninstallScript = "k3s-uninstall.sh"
+	}
+
+	cmd := exec.Command("/bin/sh", "-c", filepath.Join(clusterRootPath, "/opt/k3s/scripts", uninstallScript))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		response.Error = fmt.Sprintf("failed to reset cluster: %s", string(output))
