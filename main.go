@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
+	"github.com/mudler/go-pluggable"
 	"github.com/sirupsen/logrus"
 
 	"github.com/kairos-io/provider-k3s/pkg/provider"
@@ -20,7 +21,10 @@ func main() {
 		Provider: provider.ClusterProvider,
 	}
 
-	if err := plugin.Run(); err != nil {
+	if err := plugin.Run(pluggable.FactoryPlugin{
+		EventType:     clusterplugin.EventClusterReset,
+		PluginHandler: provider.HandleClusterReset,
+	}); err != nil {
 		logrus.Fatal(err)
 	}
 }
