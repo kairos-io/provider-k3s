@@ -1,10 +1,10 @@
 module github.com/kairos-io/provider-k3s
 
-go 1.22.5
+go 1.23.1
 
 require (
-	github.com/kairos-io/kairos-sdk v0.4.2
-	github.com/mudler/yip v1.9.4
+	github.com/kairos-io/kairos-sdk v0.5.0
+	github.com/mudler/yip v1.10.0
 	github.com/onsi/gomega v1.34.2
 	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/yaml.v3 v3.0.1
