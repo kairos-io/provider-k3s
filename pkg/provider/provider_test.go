@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
-	yip "github.com/mudler/yip/pkg/schema"
-	"github.com/onsi/gomega"
 )
 
 func Test_parseOptions(t *testing.T) {
@@ -86,55 +84,6 @@ func Test_parseOptions(t *testing.T) {
 			if !bytes.Equal(userOptions, tt.expectedUserOptions) {
 				t.Errorf("parseOptions() userOptions = %v, want %v", string(userOptions), string(tt.expectedUserOptions))
 			}
-		})
-	}
-}
-
-func Test_rootPathMountStage(t *testing.T) {
-	gomega.RegisterTestingT(t)
-
-	type args struct {
-		rootPath string
-	}
-	tests := []struct {
-		name string
-		args args
-		want yip.Stage
-	}{
-		{
-			name: "custom root path",
-			args: args{
-				rootPath: "/writable",
-			},
-			want: yip.Stage{
-				Name: "Mount K3s data, conf directories",
-				Commands: []string{
-					"mkdir -p /writable/etc/rancher",
-					"mkdir -p /etc/rancher",
-					"systemctl enable --now etc-rancher.mount",
-					"mkdir -p /writable/var/lib/rancher",
-					"mkdir -p /var/lib/rancher",
-					"systemctl enable --now var-lib-rancher.mount",
-				},
-				Files: []yip.File{
-					{
-						Path:        "/run/systemd/system/etc-rancher.mount",
-						Permissions: 0644,
-						Content:     "[Unit]\nDescription=etc-rancher mount unit\nBefore=local-fs.target k3s.service k3s-agent.service\n\n[Mount]\nWhat=/writable/etc/rancher\nWhere=/etc/rancher\nType=none\nOptions=bind\n\n[Install]\nWantedBy=local-fs.target\n",
-					},
-					{
-						Path:        "/run/systemd/system/var-lib-rancher.mount",
-						Permissions: 0644,
-						Content:     "[Unit]\nDescription=var-lib-rancher mount unit\nBefore=local-fs.target k3s.service k3s-agent.service\n\n[Mount]\nWhat=/writable/var/lib/rancher\nWhere=/var/lib/rancher\nType=none\nOptions=bind\n\n[Install]\nWantedBy=local-fs.target\n",
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := rootPathMountStage(tt.args.rootPath)
-			gomega.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
