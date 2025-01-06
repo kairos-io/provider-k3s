@@ -63,8 +63,18 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 		k3sConfig.ClusterInit = true
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
 	case clusterplugin.RoleControlPlane:
+		userOptionConfig = ""
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
+		// Data received from upstream contains config for both control plane and worker. Thus, for control plane,
+		// config is being filtered via unmarshal into server config.
+		var serverCfg api.K3sServerConfig
+		if err := yaml.Unmarshal([]byte(cluster.Options), &serverCfg); err == nil {
+			out, _ := yaml.Marshal(serverCfg)
+			userOptionConfig = string(out)
+		} else {
+			logrus.Fatalf("failed to un-marshal cluster options in k3s agent config %s", err)
+		}
 	case clusterplugin.RoleWorker:
 		userOptionConfig = ""
 		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
