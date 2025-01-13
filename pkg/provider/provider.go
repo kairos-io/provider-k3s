@@ -73,7 +73,7 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 			out, _ := yaml.Marshal(serverCfg)
 			userOptionConfig = string(out)
 		} else {
-			logrus.Fatalf("failed to un-marshal cluster options in k3s agent config %s", err)
+			logrus.Fatalf("failed to un-marshal cluster options in k3s server config %s", err)
 		}
 	case clusterplugin.RoleWorker:
 		userOptionConfig = ""
