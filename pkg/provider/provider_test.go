@@ -71,6 +71,19 @@ func Test_parseOptions(t *testing.T) {
 			expectedProxyOptions: []byte(`null`),
 			expectedUserOptions:  []byte(`{}`),
 		},
+		{
+			name: "Test 2",
+			cluster: clusterplugin.Cluster{
+				ClusterToken:     "token",
+				ControlPlaneHost: "localhost",
+				Role:             "controlplane",
+				Options: `disable-apiserver-lb: true
+enable-pprof: true`,
+			},
+			expectedOptions:      []byte(`{"token":"token","server":"https://localhost:6443"}`),
+			expectedProxyOptions: []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

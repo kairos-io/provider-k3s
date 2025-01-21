@@ -58,13 +58,11 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 	}
 	userOptionConfig := cluster.Options
 
+	logrus.Printf("cluster Options: %s\n", cluster.Options)
 	switch cluster.Role {
-	case clusterplugin.RoleInit:
-		k3sConfig.ClusterInit = true
-		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
-	case clusterplugin.RoleControlPlane:
+	case clusterplugin.RoleInit, clusterplugin.RoleControlPlane:
 		userOptionConfig = ""
-		k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
+		k3sConfig.ClusterInit = cluster.Role == clusterplugin.RoleInit
 		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
 		// Data received from upstream contains config for both control plane and worker. Thus, for control plane,
 		// config is being filtered via unmarshal into server config.

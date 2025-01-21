@@ -28,9 +28,10 @@ type K3sAgentConfig struct {
 	PrivateRegistry                string   `json:"private-registry,omitempty"  yaml:"private-registry,omitempty"`
 	DisableDefaultRegistryEndpoint bool     `json:"disable-default-registry-endpoint,omitempty" yaml:"disable-default-registry-endpoint,omitempty"`
 	NonrootDevices                 bool     `json:"nonroot-devices,omitempty" yaml:"nonroot-devices,omitempty"`
-	NodeIP                         string   `json:"node-ip,omitempty" yaml:"node-ip,omitempty"`
+	AirgapExtraRegistry            []string `json:"airgap-extra-registry,omitempty" yaml:"airgap-extra-registry,omitempty"`
+	NodeIP                         []string `json:"node-ip,omitempty" yaml:"node-ip,omitempty"`
 	BindAddress                    string   `json:"bind-address,omitempty" yaml:"bind-address,omitempty"`
-	NodeExternalIP                 string   `json:"node-external-ip,omitempty" yaml:"node-external-ip,omitempty"`
+	NodeExternalIP                 []string `json:"node-external-ip,omitempty" yaml:"node-external-ip,omitempty"`
 	NodeInternalDNS                []string `json:"node-internal-dns,omitempty" yaml:"node-internal-dns,omitempty"`
 	NodeExternalDNS                []string `json:"node-external-dns,omitempty" yaml:"node-external-dns,omitempty"`
 	ResolvConf                     string   `json:"resolv-conf,omitempty" yaml:"resolv-conf,omitempty"`
