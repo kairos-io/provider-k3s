@@ -3,9 +3,11 @@ package provider
 import (
 	"bytes"
 	_ "embed"
+	"reflect"
 	"testing"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
+	"gopkg.in/yaml.v3"
 )
 
 func Test_parseOptions(t *testing.T) {
@@ -21,7 +23,7 @@ func Test_parseOptions(t *testing.T) {
 			cluster:              clusterplugin.Cluster{},
 			expectedOptions:      []byte(`{}`),
 			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
 		},
 		{
 			name: "Init: Standard",
@@ -30,9 +32,9 @@ func Test_parseOptions(t *testing.T) {
 				ControlPlaneHost: "localhost",
 				Role:             "init",
 			},
-			expectedOptions:      []byte(`{"cluster-init":true,"token":"token","tls-san":["localhost"]}`),
+			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","cluster-init":true}`),
 			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
 		},
 		{
 			name: "Init: 2-Node",
@@ -45,9 +47,9 @@ func Test_parseOptions(t *testing.T) {
 					"datastore-endpoint": "localhost:2379",
 				},
 			},
-			expectedOptions:      []byte(`{"cluster-init":false,"token":"token","tls-san":["localhost"],"datastore-endpoint":"localhost:2379"}`),
+			expectedOptions:      []byte(`{"cluster-init":false,"tls-san":"localhost","token":"token","datastore-endpoint":"localhost:2379"}`),
 			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
 		},
 		{
 			name: "Control Plane",
@@ -56,9 +58,9 @@ func Test_parseOptions(t *testing.T) {
 				ControlPlaneHost: "localhost",
 				Role:             "controlplane",
 			},
-			expectedOptions:      []byte(`{"token":"token","server":"https://localhost:6443","tls-san":["localhost"]}`),
+			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","server":"https://localhost:6443"}`),
 			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
 		},
 		{
 			name: "Worker",
@@ -70,6 +72,19 @@ func Test_parseOptions(t *testing.T) {
 			expectedOptions:      []byte(`{"token":"token","server":"https://localhost:6443"}`),
 			expectedProxyOptions: []byte(`null`),
 			expectedUserOptions:  []byte(`{}`),
+		},
+		{
+			name: "Control Plane: With Options",
+			cluster: clusterplugin.Cluster{
+				ClusterToken:     "token",
+				ControlPlaneHost: "localhost",
+				Role:             "controlplane",
+				Options: `disable-apiserver-lb: true
+enable-pprof: true`,
+			},
+			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","server":"https://localhost:6443"}`),
+			expectedProxyOptions: []byte(`{"disable-apiserver-lb":true,"enable-pprof":true}`),
+			expectedUserOptions:  []byte(`{"enable-pprof":true}`),
 		},
 	}
 	for _, tt := range tests {
@@ -83,6 +98,97 @@ func Test_parseOptions(t *testing.T) {
 			}
 			if !bytes.Equal(userOptions, tt.expectedUserOptions) {
 				t.Errorf("parseOptions() userOptions = %v, want %v", string(userOptions), string(tt.expectedUserOptions))
+			}
+		})
+	}
+}
+
+func Test_unmarshall(t *testing.T) {
+	yamlfile := `test: "xyz,zyx"
+`
+	type Xyz struct {
+		Test string `json:"test,omitempty" yaml:"test,omitempty"`
+	}
+	x := Xyz{}
+	err := yaml.Unmarshal([]byte(yamlfile), &x)
+	if err != nil {
+		t.Errorf("unmarshall() error = %v", err)
+	}
+
+	t.Logf("%+v", x)
+	t.Logf("%s\n", x.Test)
+	u, err := yaml.Marshal(x)
+	if err != nil {
+		t.Errorf("unmarshall() error = %v", err)
+	}
+
+	t.Logf("%s\n", string(u))
+}
+
+func Test_decodeOptions(t *testing.T) {
+	type args struct {
+		in map[string]interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]interface{}
+	}{
+		{
+			name: "One list of interfaces",
+			args: args{
+				in: map[string]interface{}{
+					"test": []string{"xyz", "zyx"},
+				},
+			},
+			want: map[string]interface{}{
+				"test": "xyz,zyx",
+			},
+		},
+		{
+			name: "One list of strings",
+			args: args{
+				in: map[string]interface{}{
+					"test": []interface{}{"xyz", "zyx"},
+				},
+			},
+			want: map[string]interface{}{
+				"test": "xyz,zyx",
+			},
+		},
+		{
+			name: "One list of interfaces and one list of strings",
+			args: args{
+				in: map[string]interface{}{
+					"test":  []interface{}{"xyz", "zyx"},
+					"test2": []string{"abc", "cba"},
+				},
+			},
+			want: map[string]interface{}{
+				"test":  "xyz,zyx",
+				"test2": "abc,cba",
+			},
+		},
+		{
+			name: "One list of interfaces and one list of strings",
+			args: args{
+				in: map[string]interface{}{
+					"test":  []interface{}{"xyz", "zyx"},
+					"test2": []string{"abc", "cba"},
+					"test3": []interface{}{[]interface{}{"lmn", "pqr"}, "fed"},
+				},
+			},
+			want: map[string]interface{}{
+				"test":  "xyz,zyx",
+				"test2": "abc,cba",
+				"test3": "lmn,pqr,fed",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := decodeOptions(tt.args.in); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeOptions() = %v, want %v", got, tt.want)
 			}
 		})
 	}
