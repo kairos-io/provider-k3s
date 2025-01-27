@@ -37,6 +37,7 @@ BUILD_GOLANG:
     ARG BIN
     ARG SRC
     ENV CGO_ENABLED=0
+    ENV GO_LDFLAGS=" -X github.com/kairos-io/provider-k3s/pkg/version.Version=${VERSION} -w -s"
     RUN go-build-static.sh -a -o ${BIN} ./${SRC}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
