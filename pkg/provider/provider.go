@@ -88,7 +88,7 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 		// Data received from upstream contains config for both control plane and worker. Thus, for worker,
 		// config is being filtered via unmarshal into agent config.
 		var agentCfg api.K3sAgentConfig
-		if err := yaml.Unmarshal([]byte(cluster.Options), &agentCfg); err == nil {
+		if err := yaml.Unmarshal(userOptionConfig, &agentCfg); err == nil {
 			userOptionConfig, _ = yaml.Marshal(agentCfg)
 		} else {
 			logrus.Fatalf("failed to un-marshal cluster options in k3s agent config %s", err)
