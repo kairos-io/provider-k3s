@@ -71,6 +71,9 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 	switch cluster.Role {
 	case clusterplugin.RoleInit, clusterplugin.RoleControlPlane:
 		k3sConfig.ClusterInit = cluster.Role == clusterplugin.RoleInit
+		if cluster.Role == clusterplugin.RoleControlPlane {
+			k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
+		}
 		k3sConfig.TLSSan = cluster.ControlPlaneHost
 		// Data received from upstream contains config for both control plane and worker. Thus, for control plane,
 		// config is being filtered via unmarshal into server config.

@@ -23,7 +23,7 @@ func Test_parseOptions(t *testing.T) {
 			cluster:              clusterplugin.Cluster{},
 			expectedOptions:      []byte(`{}`),
 			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
 		},
 		{
 			name: "Init: Standard",
@@ -32,9 +32,9 @@ func Test_parseOptions(t *testing.T) {
 				ControlPlaneHost: "localhost",
 				Role:             "init",
 			},
-			expectedOptions:      []byte(`{"tls-san":["localhost"],"token":"token","cluster-init":true}`),
+			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","cluster-init":true}`),
 			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
 		},
 		{
 			name: "Init: 2-Node",
@@ -47,9 +47,9 @@ func Test_parseOptions(t *testing.T) {
 					"datastore-endpoint": "localhost:2379",
 				},
 			},
-			expectedOptions:      []byte(`{"cluster-init":false,"tls-san":["localhost"],"token":"token","datastore-endpoint":"localhost:2379"}`),
+			expectedOptions:      []byte(`{"cluster-init":false,"tls-san":"localhost","token":"token","datastore-endpoint":"localhost:2379"}`),
 			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`null`),
+			expectedUserOptions:  []byte(`{}`),
 		},
 		{
 			name: "Control Plane",
@@ -58,7 +58,7 @@ func Test_parseOptions(t *testing.T) {
 				ControlPlaneHost: "localhost",
 				Role:             "controlplane",
 			},
-			expectedOptions:      []byte(`{"tls-san":["localhost"],"token":"token","server":"https://localhost:6443"}`),
+			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","server":"https://localhost:6443"}`),
 			expectedProxyOptions: []byte(`null`),
 			expectedUserOptions:  []byte(`{}`),
 		},
@@ -74,7 +74,7 @@ func Test_parseOptions(t *testing.T) {
 			expectedUserOptions:  []byte(`{}`),
 		},
 		{
-			name: "Test 2",
+			name: "Control Plane: With Options",
 			cluster: clusterplugin.Cluster{
 				ClusterToken:     "token",
 				ControlPlaneHost: "localhost",
@@ -82,9 +82,9 @@ func Test_parseOptions(t *testing.T) {
 				Options: `disable-apiserver-lb: true
 enable-pprof: true`,
 			},
-			expectedOptions:      []byte(`{"token":"token","server":"https://localhost:6443"}`),
-			expectedProxyOptions: []byte(`null`),
-			expectedUserOptions:  []byte(`{}`),
+			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","server":"https://localhost:6443"}`),
+			expectedProxyOptions: []byte(`{"disable-apiserver-lb":true,"enable-pprof":true}`),
+			expectedUserOptions:  []byte(`{"enable-pprof":true}`),
 		},
 	}
 	for _, tt := range tests {
