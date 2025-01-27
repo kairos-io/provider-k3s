@@ -3,9 +3,11 @@ package provider
 import (
 	"bytes"
 	_ "embed"
+	"reflect"
 	"testing"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
+	"gopkg.in/yaml.v3"
 )
 
 func Test_parseOptions(t *testing.T) {
@@ -96,6 +98,97 @@ enable-pprof: true`,
 			}
 			if !bytes.Equal(userOptions, tt.expectedUserOptions) {
 				t.Errorf("parseOptions() userOptions = %v, want %v", string(userOptions), string(tt.expectedUserOptions))
+			}
+		})
+	}
+}
+
+func Test_unmarshall(t *testing.T) {
+	yamlfile := `test: "xyz,zyx"
+`
+	type Xyz struct {
+		Test string `json:"test,omitempty" yaml:"test,omitempty"`
+	}
+	x := Xyz{}
+	err := yaml.Unmarshal([]byte(yamlfile), &x)
+	if err != nil {
+		t.Errorf("unmarshall() error = %v", err)
+	}
+
+	t.Logf("%+v", x)
+	t.Logf("%s\n", x.Test)
+	u, err := yaml.Marshal(x)
+	if err != nil {
+		t.Errorf("unmarshall() error = %v", err)
+	}
+
+	t.Logf("%s\n", string(u))
+}
+
+func Test_decodeOptions(t *testing.T) {
+	type args struct {
+		in map[string]interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]interface{}
+	}{
+		{
+			name: "One list of interfaces",
+			args: args{
+				in: map[string]interface{}{
+					"test": []string{"xyz", "zyx"},
+				},
+			},
+			want: map[string]interface{}{
+				"test": "xyz,zyx",
+			},
+		},
+		{
+			name: "One list of strings",
+			args: args{
+				in: map[string]interface{}{
+					"test": []interface{}{"xyz", "zyx"},
+				},
+			},
+			want: map[string]interface{}{
+				"test": "xyz,zyx",
+			},
+		},
+		{
+			name: "One list of interfaces and one list of strings",
+			args: args{
+				in: map[string]interface{}{
+					"test":  []interface{}{"xyz", "zyx"},
+					"test2": []string{"abc", "cba"},
+				},
+			},
+			want: map[string]interface{}{
+				"test":  "xyz,zyx",
+				"test2": "abc,cba",
+			},
+		},
+		{
+			name: "One list of interfaces and one list of strings",
+			args: args{
+				in: map[string]interface{}{
+					"test":  []interface{}{"xyz", "zyx"},
+					"test2": []string{"abc", "cba"},
+					"test3": []interface{}{[]interface{}{"lmn", "pqr"}, "fed"},
+				},
+			},
+			want: map[string]interface{}{
+				"test":  "xyz,zyx",
+				"test2": "abc,cba",
+				"test3": "lmn,pqr,fed",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := decodeOptions(tt.args.in); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeOptions() = %v, want %v", got, tt.want)
 			}
 		})
 	}

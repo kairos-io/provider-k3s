@@ -16,13 +16,13 @@ type K3sServerConfig struct {
 	ApiServerBindAddress           string        `yaml:"apiserver-bind-address,omitempty" json:"apiserver-bind-address,omitempty"`
 	AdvertiseAddress               string        `yaml:"advertise-address,omitempty" json:"advertise-address,omitempty"`
 	AdvertisePort                  int           `yaml:"advertise-port,omitempty" json:"advertise-port,omitempty"`
-	TLSSan                         []string      `yaml:"tls-san,omitempty" json:"tls-san,omitempty"`
+	TLSSan                         string        `yaml:"tls-san,omitempty" json:"tls-san,omitempty"`
 	TLSSanSecurity                 bool          `yaml:"tls-san-security,omitempty" json:"tls-san-security,omitempty"`
 	DataDir                        string        `yaml:"data-dir,omitempty" json:"data-dir,omitempty"`
-	ClusterCIDR                    []string      `yaml:"cluster-cidr,omitempty" json:"cluster-cidr,omitempty"`
-	ServiceCIDR                    []string      `yaml:"service-cidr,omitempty" json:"service-cidr,omitempty"`
+	ClusterCIDR                    string        `yaml:"cluster-cidr,omitempty" json:"cluster-cidr,omitempty"`
+	ServiceCIDR                    string        `yaml:"service-cidr,omitempty" json:"service-cidr,omitempty"`
 	ServiceNodePortRange           string        `yaml:"service-node-port-range,omitempty" json:"service-node-port-range,omitempty"`
-	ClusterDNS                     []string      `yaml:"cluster-dns,omitempty" json:"cluster-dns,omitempty"`
+	ClusterDNS                     string        `yaml:"cluster-dns,omitempty" json:"cluster-dns,omitempty"`
 	ClusterDomain                  string        `yaml:"cluster-domain,omitempty" json:"cluster-domain,omitempty"`
 	FlannelBackend                 string        `yaml:"flannel-backend,omitempty" json:"flannel-backend,omitempty"`
 	FlannelIPv6Masq                bool          `yaml:"flannel-ipv6-masq,omitempty" json:"flannel-ipv6-masq,omitempty"`
@@ -41,11 +41,11 @@ type K3sServerConfig struct {
 	ClusterInit                    bool          `yaml:"cluster-init,omitempty" json:"cluster-init,omitempty"`
 	ClusterReset                   bool          `yaml:"cluster-reset,omitempty" json:"cluster-reset,omitempty"`
 	ClusterResetRestorePath        string        `yaml:"cluster-reset-restore-path,omitempty" json:"cluster-reset-restore-path,omitempty"`
-	KubeApiServerArg               []string      `yaml:"kube-apiserver-arg,omitempty" json:"kube-apiserver-arg,omitempty"`
-	EtcdArg                        []string      `yaml:"etcd-arg,omitempty" json:"etcd-arg,omitempty"`
-	KubeControllerManagerArg       []string      `yaml:"kube-controller-manager-arg,omitempty" json:"kube-controller-manager-arg,omitempty"`
-	KubeSchedulerArg               []string      `yaml:"kube-scheduler-arg,omitempty" json:"kube-scheduler-arg,omitempty"`
-	KubeCloudControllerManagerArg  []string      `yaml:"kube-cloud-controller-manager-arg,omitempty" json:"kube-cloud-controller-manager-arg,omitempty"`
+	KubeApiServerArg               string        `yaml:"kube-apiserver-arg,omitempty" json:"kube-apiserver-arg,omitempty"`
+	EtcdArg                        string        `yaml:"etcd-arg,omitempty" json:"etcd-arg,omitempty"`
+	KubeControllerManagerArg       string        `yaml:"kube-controller-manager-arg,omitempty" json:"kube-controller-manager-arg,omitempty"`
+	KubeSchedulerArg               string        `yaml:"kube-scheduler-arg,omitempty" json:"kube-scheduler-arg,omitempty"`
+	KubeCloudControllerManagerArg  string        `yaml:"kube-cloud-controller-manager-arg,omitempty" json:"kube-cloud-controller-manager-arg,omitempty"`
 	KineTLS                        bool          `yaml:"kine-tls,omitempty" json:"kine-tls,omitempty"`
 	DatastoreEndpoint              string        `yaml:"datastore-endpoint,omitempty" json:"datastore-endpoint,omitempty"`
 	DatastoreCaFile                string        `yaml:"datastore-cafile,omitempty" json:"datastore-cafile,omitempty"`
@@ -72,7 +72,7 @@ type K3sServerConfig struct {
 	EtcdS3Insecure                 bool          `json:"etcd-s3-insecure,omitempty" yaml:"etcd-s3-insecure,omitempty"`
 	EtcdS3Timeout                  time.Duration `json:"etcd-s3-timeout,omitempty" yaml:"etcd-s3-timeout,omitempty"`
 	DefaultLocalStoragePath        string        `yaml:"default-local-storage-path,omitempty" json:"default-local-storage-path,omitempty"`
-	Disable                        []string      `json:"disable,omitempty" yaml:"disable,omitempty"`
+	Disable                        string        `json:"disable,omitempty" yaml:"disable,omitempty"`
 	DisableScheduler               bool          `json:"disable-scheduler,omitempty" yaml:"disable-scheduler,omitempty"`
 	DisableCloudController         bool          `json:"disable-cloud-controller,omitempty" yaml:"disable-cloud-controller,omitempty"`
 	DisableKubeProxy               bool          `json:"disable-kube-proxy,omitempty" yaml:"disable-kube-proxy,omitempty"`
@@ -85,8 +85,8 @@ type K3sServerConfig struct {
 	SupervisorMetrics              bool          `json:"supervisor-metrics,omitempty" yaml:"supervisor-metrics,omitempty"`
 	NodeName                       string        `yaml:"node-name,omitempty" json:"node-name,omitempty"`
 	WithNodeID                     bool          `json:"with-node-id,omitempty" yaml:"with-node-id,omitempty"`
-	NodeLabel                      []string      `yaml:"node-label,omitempty" json:"node-label,omitempty"`
-	NodeTaint                      []string      `yaml:"node-taint,omitempty" json:"node-taint,omitempty"`
+	NodeLabel                      string        `yaml:"node-label,omitempty" json:"node-label,omitempty"`
+	NodeTaint                      string        `yaml:"node-taint,omitempty" json:"node-taint,omitempty"`
 	ImageCredentialProviderBinDir  string        `json:"image-credential-provider-bin-dir,omitempty" yaml:"image-credential-provider-bin-dir,omitempty"`
 	ImageCredentialProviderConfig  string        `json:"image-credential-provider-config,omitempty" yaml:"image-credential-provider-config,omitempty"`
 	Docker                         bool          `json:"docker,omitempty" yaml:"docker,omitempty"`
@@ -99,19 +99,19 @@ type K3sServerConfig struct {
 	Snapshotter                    string        `json:"snapshotter,omitempty" yaml:"snapshotter,omitempty"`
 	PrivateRegistry                string        `json:"private-registry,omitempty"  yaml:"private-registry,omitempty"`
 	SystemDefaultRegistry          string        `yaml:"system-default-registry,omitempty" json:"system-default-registry,omitempty"`
-	AirgapExtraRegistry            []string      `json:"airgap-extra-registry,omitempty" yaml:"airgap-extra-registry,omitempty"`
-	NodeIP                         []string      `yaml:"node-ip,omitempty" json:"node-ip,omitempty"`
-	NodeExternalIP                 []string      `yaml:"node-external-ip,omitempty" json:"node-external-ip,omitempty"`
-	NodeInternalDNS                []string      `json:"node-internal-dns,omitempty" yaml:"node-internal-dns,omitempty"`
-	NodeExternalDNS                []string      `json:"node-external-dns,omitempty" yaml:"node-external-dns,omitempty"`
+	AirgapExtraRegistry            string        `json:"airgap-extra-registry,omitempty" yaml:"airgap-extra-registry,omitempty"`
+	NodeIP                         string        `yaml:"node-ip,omitempty" json:"node-ip,omitempty"`
+	NodeExternalIP                 string        `yaml:"node-external-ip,omitempty" json:"node-external-ip,omitempty"`
+	NodeInternalDNS                string        `json:"node-internal-dns,omitempty" yaml:"node-internal-dns,omitempty"`
+	NodeExternalDNS                string        `json:"node-external-dns,omitempty" yaml:"node-external-dns,omitempty"`
 	ResolvConf                     string        `yaml:"resolv-conf,omitempty" json:"resolv-conf,omitempty"`
 	FlannelIface                   string        `json:"flannel-iface,omitempty" yaml:"flannel-iface,omitempty"`
 	FlannelConf                    string        `json:"flannel-conf,omitempty" yaml:"flannel-conf,omitempty"`
 	FlannelCniConfFile             string        `json:"flannel-cni-conf,omitempty" yaml:"flannel-cni-conf,omitempty"`
 	VPNAuth                        string        `json:"vpn-auth,omitempty" yaml:"vpn-auth,omitempty"`
 	VPNAuthFile                    string        `json:"vpn-auth-file,omitempty" yaml:"vpn-auth-file,omitempty"`
-	KubeletArg                     []string      `json:"kubelet-arg,omitempty"  yaml:"kubelet-arg,omitempty"`
-	KubeProxyArg                   []string      `json:"kube-proxy-arg,omitempty"  yaml:"kube-proxy-arg,omitempty"`
+	KubeletArg                     string        `json:"kubelet-arg,omitempty"  yaml:"kubelet-arg,omitempty"`
+	KubeProxyArg                   string        `json:"kube-proxy-arg,omitempty"  yaml:"kube-proxy-arg,omitempty"`
 	ProtectKernelDefaults          bool          `json:"protect-kernel-defaults,omitempty" yaml:"protect-kernel-defaults,omitempty"`
 	SecretsEncryption              bool          `yaml:"secrets-encryption,omitempty" json:"secrets-encryption,omitempty"`
 	EnablePProf                    bool          `yaml:"enable-pprof,omitempty" json:"enable-pprof,omitempty"`
@@ -120,6 +120,6 @@ type K3sServerConfig struct {
 	EnableSELinux                  bool          `json:"selinux,omitempty" yaml:"selinux,omitempty"`
 	LBServerPort                   int           `json:"lb-server-port,omitempty" yaml:"lb-server-port,omitempty"`
 	DisableAgent                   bool          `json:"disable-agent,omitempty" yaml:"disable-agent,omitempty"`
-	KubeControllerArg              []string      `json:"kube-controller-arg,omitempty" yaml:"kube-controller-arg,omitempty"`
-	KubeCloudControllerArg         []string      `json:"kube-cloud-controller-arg,omitempty" yaml:"kube-cloud-controller-arg,omitempty"`
+	KubeControllerArg              string        `json:"kube-controller-arg,omitempty" yaml:"kube-controller-arg,omitempty"`
+	KubeCloudControllerArg         string        `json:"kube-cloud-controller-arg,omitempty" yaml:"kube-cloud-controller-arg,omitempty"`
 }
