@@ -157,6 +157,8 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 	var stages []yip.Stage
 	clusterRootPath := getClusterRootPath(cluster)
 
+	stages = append(stages, getSwapDisableStage())
+
 	stages = append(stages, yip.Stage{
 		Name:  constants.InstallK3sConfigFiles,
 		Files: files,
@@ -199,6 +201,16 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 	)
 
 	return stages
+}
+
+func getSwapDisableStage() yip.Stage {
+	return yip.Stage{
+		Name: "disable disk swap",
+		Commands: []string{
+			"sed -i '/ swap / s/^\\(.*\\)$/#\\1/g' /etc/fstab",
+			"swapoff -a",
+		},
+	}
 }
 
 func proxyEnv(proxyOptions []byte, proxyMap map[string]string) string {

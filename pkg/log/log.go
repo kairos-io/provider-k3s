@@ -22,18 +22,18 @@ func InitLogger(path string) {
 	}
 
 	logrus.SetOutput(logfile)
-	logrus.SetFormatter(KubeadmLogger{
+	logrus.SetFormatter(K3sLogger{
 		Version:   version.Version,
 		Formatter: logrus.StandardLogger().Formatter,
 	})
 }
 
-type KubeadmLogger struct {
+type K3sLogger struct {
 	Version   string
 	Formatter logrus.Formatter
 }
 
-func (l KubeadmLogger) Format(entry *logrus.Entry) ([]byte, error) {
+func (l K3sLogger) Format(entry *logrus.Entry) ([]byte, error) {
 	entry.Data["version"] = l.Version
 	return l.Formatter.Format(entry)
 }
