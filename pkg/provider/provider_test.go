@@ -142,7 +142,7 @@ func Test_decodeOptions(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"test": "xyz,zyx",
+				"test": []string{"xyz", "zyx"},
 			},
 		},
 		{
@@ -153,7 +153,7 @@ func Test_decodeOptions(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"test": "xyz,zyx",
+				"test": []interface{}{"xyz", "zyx"},
 			},
 		},
 		{
@@ -165,23 +165,25 @@ func Test_decodeOptions(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"test":  "xyz,zyx",
-				"test2": "abc,cba",
+				"test":  []interface{}{"xyz", "zyx"},
+				"test2": []string{"abc", "cba"},
 			},
 		},
 		{
-			name: "One list of interfaces and one list of strings",
+			name: "One string and one comma separated string",
 			args: args{
 				in: map[string]interface{}{
-					"test":  []interface{}{"xyz", "zyx"},
-					"test2": []string{"abc", "cba"},
-					"test3": []interface{}{[]interface{}{"lmn", "pqr"}, "fed"},
+					"test":         "xyz,zyx",
+					"test2":        []string{"abc", "cba"},
+					"test3":        "xyz",
+					"cluster-cidr": "192.168.0.1/24",
 				},
 			},
 			want: map[string]interface{}{
-				"test":  "xyz,zyx",
-				"test2": "abc,cba",
-				"test3": "lmn,pqr,fed",
+				"test":         []string{"xyz", "zyx"},
+				"test2":        []string{"abc", "cba"},
+				"test3":        "xyz",
+				"cluster-cidr": []string{"192.168.0.1/24"},
 			},
 		},
 	}

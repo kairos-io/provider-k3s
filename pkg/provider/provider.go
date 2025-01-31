@@ -3,6 +3,7 @@ package provider
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"net"
 	"path/filepath"
@@ -74,7 +75,7 @@ func parseOptions(cluster clusterplugin.Cluster) ([]byte, []byte, []byte) {
 		if cluster.Role == clusterplugin.RoleControlPlane {
 			k3sConfig.Server = fmt.Sprintf("https://%s:6443", cluster.ControlPlaneHost)
 		}
-		k3sConfig.TLSSan = cluster.ControlPlaneHost
+		k3sConfig.TLSSan = []string{cluster.ControlPlaneHost}
 		// Data received from upstream contains config for both control plane and worker. Thus, for control plane,
 		// config is being filtered via unmarshal into server config.
 		var serverCfg api.K3sServerConfig
@@ -287,21 +288,21 @@ func getClusterRootPath(cluster clusterplugin.Cluster) string {
 func decodeOptions(in map[string]interface{}) map[string]interface{} {
 	out := make(map[string]interface{})
 	for k, v := range in {
-		out[k] = decodeOption(v)
+		out[k] = decodeOption(k, v)
 	}
 	return out
 }
 
-func decodeOption(in interface{}) interface{} {
+func decodeOption(k string, in interface{}) interface{} {
 	switch in := in.(type) {
-	case []interface{}:
-		var out []string
-		for _, v := range in {
-			out = append(out, decodeOption(v).(string))
+	case string:
+		split := strings.Split(in, ",")
+		if len(split) > 1 {
+			return split
+		} else if slices.Contains(api.StringListKeys, k) {
+			return []string{in}
 		}
-		return strings.Join(out, ",")
-	case []string:
-		return strings.Join(in, ",")
+		return in
 	}
 	return in
 }

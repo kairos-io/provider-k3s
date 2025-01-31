@@ -37,6 +37,7 @@ BUILD_GOLANG:
     ARG BIN
     ARG SRC
     ENV CGO_ENABLED=0
+    ARG VERSION
     ENV GO_LDFLAGS=" -X github.com/kairos-io/provider-k3s/pkg/version.Version=${VERSION} -w -s"
     RUN go-build-static.sh -a -o ${BIN} ./${SRC}
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
@@ -60,8 +61,10 @@ lint:
     RUN golangci-lint run
 
 build-provider:
+    DO +VERSION
+    ARG VERSION=$(cat VERSION)
     FROM +go-deps
-    DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go
+    DO +BUILD_GOLANG --BIN=agent-provider-k3s --SRC=main.go --VERSION=$VERSION
 
 build-provider-package:
     DO +VERSION
