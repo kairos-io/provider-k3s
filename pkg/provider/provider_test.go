@@ -32,7 +32,7 @@ func Test_parseOptions(t *testing.T) {
 				ControlPlaneHost: "localhost",
 				Role:             "init",
 			},
-			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","cluster-init":true}`),
+			expectedOptions:      []byte(`{"tls-san":["localhost"],"token":"token","cluster-init":true}`),
 			expectedProxyOptions: []byte(`null`),
 			expectedUserOptions:  []byte(`{}`),
 		},
@@ -47,7 +47,7 @@ func Test_parseOptions(t *testing.T) {
 					"datastore-endpoint": "localhost:2379",
 				},
 			},
-			expectedOptions:      []byte(`{"cluster-init":false,"tls-san":"localhost","token":"token","datastore-endpoint":"localhost:2379"}`),
+			expectedOptions:      []byte(`{"cluster-init":false,"tls-san":["localhost"],"token":"token","datastore-endpoint":"localhost:2379"}`),
 			expectedProxyOptions: []byte(`null`),
 			expectedUserOptions:  []byte(`{}`),
 		},
@@ -58,7 +58,7 @@ func Test_parseOptions(t *testing.T) {
 				ControlPlaneHost: "localhost",
 				Role:             "controlplane",
 			},
-			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","server":"https://localhost:6443"}`),
+			expectedOptions:      []byte(`{"tls-san":["localhost"],"token":"token","server":"https://localhost:6443"}`),
 			expectedProxyOptions: []byte(`null`),
 			expectedUserOptions:  []byte(`{}`),
 		},
@@ -82,7 +82,7 @@ func Test_parseOptions(t *testing.T) {
 				Options: `disable-apiserver-lb: true
 enable-pprof: true`,
 			},
-			expectedOptions:      []byte(`{"tls-san":"localhost","token":"token","server":"https://localhost:6443"}`),
+			expectedOptions:      []byte(`{"tls-san":["localhost"],"token":"token","server":"https://localhost:6443"}`),
 			expectedProxyOptions: []byte(`{"disable-apiserver-lb":true,"enable-pprof":true}`),
 			expectedUserOptions:  []byte(`{"enable-pprof":true}`),
 		},
@@ -142,7 +142,7 @@ func Test_decodeOptions(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"test": "xyz,zyx",
+				"test": []string{"xyz", "zyx"},
 			},
 		},
 		{
@@ -153,7 +153,7 @@ func Test_decodeOptions(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"test": "xyz,zyx",
+				"test": []interface{}{"xyz", "zyx"},
 			},
 		},
 		{
@@ -165,23 +165,25 @@ func Test_decodeOptions(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"test":  "xyz,zyx",
-				"test2": "abc,cba",
+				"test":  []interface{}{"xyz", "zyx"},
+				"test2": []string{"abc", "cba"},
 			},
 		},
 		{
-			name: "One list of interfaces and one list of strings",
+			name: "One string and one comma separated string",
 			args: args{
 				in: map[string]interface{}{
-					"test":  []interface{}{"xyz", "zyx"},
-					"test2": []string{"abc", "cba"},
-					"test3": []interface{}{[]interface{}{"lmn", "pqr"}, "fed"},
+					"test":         "xyz,zyx",
+					"test2":        []string{"abc", "cba"},
+					"test3":        "xyz",
+					"cluster-cidr": "192.168.0.1/24",
 				},
 			},
 			want: map[string]interface{}{
-				"test":  "xyz,zyx",
-				"test2": "abc,cba",
-				"test3": "lmn,pqr,fed",
+				"test":         []string{"xyz", "zyx"},
+				"test2":        []string{"abc", "cba"},
+				"test3":        "xyz",
+				"cluster-cidr": []string{"192.168.0.1/24"},
 			},
 		},
 	}
