@@ -2,7 +2,7 @@ module github.com/kairos-io/provider-k3s
 
 go 1.24.2
 
-toolchain go1.24.3
+toolchain go1.24.5
 
 require (
 	github.com/kairos-io/kairos-sdk v0.9.3
