@@ -1,4 +1,4 @@
-name: Developer Agent - K3s Provider
+name: Provider-k3s Developer
 description: Implementation agent for Kairos K3s provider development
 
 instructions: |

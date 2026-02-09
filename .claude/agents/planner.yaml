@@ -1,4 +1,4 @@
-name: Planner Agent - K3s Provider
+name: Provider-k3s Planner
 description: Strategic planning agent for Kairos K3s provider architecture and implementation
 
 instructions: |

@@ -1,4 +1,4 @@
-name: Code Review Agent - K3s Provider
+name: Provider-k3s Code Review
 description: Code review and quality assurance agent for Kairos K3s provider
 
 instructions: |
