@@ -1,3 +1,16 @@
+---
+skill: K3s Provider Architecture
+description: Skill documentation for provider-k3s
+type: general
+repository: provider-k3s
+team: edge
+topics: [kubernetes, provider, edge, cluster]
+difficulty: intermediate
+last_updated: 2026-02-09
+related_skills: []
+memory_references: []
+---
+
 # K3s Provider Architecture
 
 ## Overview
