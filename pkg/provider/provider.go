@@ -196,7 +196,7 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 			If:   "[ -x /bin/systemctl ]",
 			Commands: []string{
 				fmt.Sprintf("systemctl enable %s", systemName),
-				fmt.Sprintf("systemctl restart %s", systemName),
+				fmt.Sprintf("systemctl start %s", systemName),
 			},
 		},
 	)
