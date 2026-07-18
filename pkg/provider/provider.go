@@ -197,7 +197,7 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 			Commands: []string{
 				fmt.Sprintf("systemctl enable %s", systemName),
 				"systemctl daemon-reload",
-				fmt.Sprintf("systemctl is-active --quiet %s && systemctl restart %s || systemctl start %s", systemName, systemName, systemName),
+				fmt.Sprintf("if systemctl is-active --quiet %s || systemctl show -p ActiveState --value %s | grep -q activating; then systemctl restart %s; else systemctl start %s; fi", systemName, systemName, systemName, systemName),
 			},
 		},
 	)
