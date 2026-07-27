@@ -154,6 +154,12 @@ func parseFiles(cluster clusterplugin.Cluster, systemName string) []yip.File {
 	return files
 }
 
+func startOrRestartService(cluster clusterplugin.Cluster, systemName string) string {
+	if isProxyConfigured(cluster.Env) {
+		return fmt.Sprintf("if systemctl is-active --quiet %[1]s; then systemctl restart %[1]s; else systemctl start %[1]s; fi", systemName)
+	}
+	return fmt.Sprintf("systemctl start %s", systemName)
+}
 func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName string) []yip.Stage {
 	var stages []yip.Stage
 	clusterRootPath := getClusterRootPath(cluster)
@@ -197,7 +203,7 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 			Commands: []string{
 				fmt.Sprintf("systemctl enable %s", systemName),
 				"systemctl daemon-reload",
-				fmt.Sprintf("if systemctl is-active --quiet %s || systemctl show -p ActiveState --value %s | grep -q activating; then systemctl restart %s; else systemctl start %s; fi", systemName, systemName, systemName, systemName),
+				startOrRestartService(cluster, systemName),
 			},
 		},
 	)
@@ -215,10 +221,13 @@ func getSwapDisableStage() yip.Stage {
 	}
 }
 
+func isProxyConfigured(proxyMap map[string]string) bool {
+	return len(proxyMap["HTTP_PROXY"]) > 0 || len(proxyMap["HTTPS_PROXY"]) > 0
+}
+
 func proxyEnv(proxyOptions []byte, proxyMap map[string]string) string {
 	var proxy []string
 	var noProxy string
-	var isProxyConfigured bool
 
 	httpProxy := proxyMap["HTTP_PROXY"]
 	httpsProxy := proxyMap["HTTPS_PROXY"]
@@ -230,16 +239,14 @@ func proxyEnv(proxyOptions []byte, proxyMap map[string]string) string {
 	if len(httpProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("HTTP_PROXY=%s", httpProxy))
 		proxy = append(proxy, fmt.Sprintf("CONTAINERD_HTTP_PROXY=%s", httpProxy))
-		isProxyConfigured = true
 	}
 
 	if len(httpsProxy) > 0 {
 		proxy = append(proxy, fmt.Sprintf("HTTPS_PROXY=%s", httpsProxy))
 		proxy = append(proxy, fmt.Sprintf("CONTAINERD_HTTPS_PROXY=%s", httpsProxy))
-		isProxyConfigured = true
 	}
 
-	if isProxyConfigured {
+	if isProxyConfigured(proxyMap) {
 		noProxy = defaultNoProxy
 	}
 

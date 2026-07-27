@@ -31,6 +31,6 @@ const (
 )
 
 const (
-	ClusterRootPath         = "cluster_root_path"
+	ClusterRootPath     = "cluster_root_path"
 	RunSystemdSystemDir = "/run/systemd/system"
 )
