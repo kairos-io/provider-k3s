@@ -48,9 +48,11 @@ BUILD_GOLANG:
 
 VERSION:
     COMMAND
-    ARG VERSION                     # inherits from global (or --build-arg)
+    ARG UPSTREAM_VERSION=v4.9.0
     FROM alpine
-    RUN echo "$VERSION" > VERSION
+    COPY .spectro-version .spectro-version
+    RUN SPECTRO_VERSION=$(cat .spectro-version) && \
+        echo "${UPSTREAM_VERSION}-spectro-${SPECTRO_VERSION}" > VERSION
     SAVE ARTIFACT VERSION VERSION
 
 lint:
