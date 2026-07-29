@@ -1,10 +1,6 @@
 VERSION 0.6
 FROM alpine
 
-ARG --global SPECTRO_VERSION=0.0.0-dev
-ARG --global UPSTREAM_VERSION=v4.9.0
-ARG --global VERSION=${UPSTREAM_VERSION}-spectro-${SPECTRO_VERSION}
-
 ARG BASE_IMAGE=quay.io/kairos/core-opensuse-leap:v2.3.2
 ARG IMAGE_REPOSITORY=quay.io/kairos
 
