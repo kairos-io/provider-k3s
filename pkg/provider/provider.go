@@ -199,7 +199,8 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 				fmt.Sprintf("systemctl disable %s", systemName),
 				fmt.Sprintf("systemctl enable --runtime %s", systemName),
 				"systemctl daemon-reload",
-				// Nodes carrying the old persistent link may already be running the stale config.
+				// A node still holding the old persistent link may have auto-started k3s before
+				// this stage rendered config.yaml; start is a no-op on an already-live unit.
 				fmt.Sprintf("if systemctl is-active --quiet %[1]s || systemctl show -p ActiveState --value %[1]s | grep -q activating; then systemctl restart %[1]s; else systemctl start %[1]s; fi", systemName),
 			},
 		},
