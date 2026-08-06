@@ -3,11 +3,15 @@ package provider
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/kairos-io/kairos-sdk/clusterplugin"
 	"gopkg.in/yaml.v3"
+
+	"github.com/kairos-io/provider-k3s/pkg/constants"
 )
 
 func Test_parseOptions(t *testing.T) {
@@ -191,6 +195,39 @@ func Test_decodeOptions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := decodeOptions(tt.args.in); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("decodeOptions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_systemdStageDoesNotPersistEnablement(t *testing.T) {
+	for _, role := range []clusterplugin.Role{clusterplugin.RoleInit, clusterplugin.RoleWorker} {
+		t.Run(string(role), func(t *testing.T) {
+			cluster := clusterplugin.Cluster{ClusterToken: "token", ControlPlaneHost: "localhost", Role: role}
+			systemName := serverSystemName
+			if role == clusterplugin.RoleWorker {
+				systemName = agentSystemName
+			}
+
+			var commands []string
+			for _, stage := range parseStages(cluster, parseFiles(cluster, systemName), systemName) {
+				if stage.Name == constants.EnableSystemdServices {
+					commands = stage.Commands
+				}
+			}
+			if commands == nil {
+				t.Fatalf("no %q stage found", constants.EnableSystemdServices)
+			}
+
+			joined := strings.Join(commands, "\n")
+			if strings.Contains(joined, fmt.Sprintf("systemctl enable %s", systemName)) {
+				t.Errorf("stage persistently enables %s; systemd would auto-start it before config.yaml is rendered:\n%s", systemName, joined)
+			}
+			if !strings.Contains(joined, fmt.Sprintf("systemctl enable --runtime %s", systemName)) {
+				t.Errorf("stage does not runtime-enable %s:\n%s", systemName, joined)
+			}
+			if !strings.Contains(joined, fmt.Sprintf("systemctl disable %s", systemName)) {
+				t.Errorf("stage does not clear a pre-existing persistent link for %s:\n%s", systemName, joined)
 			}
 		})
 	}
