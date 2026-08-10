@@ -195,9 +195,13 @@ func parseStages(cluster clusterplugin.Cluster, files []yip.File, systemName str
 			Name: constants.EnableSystemdServices,
 			If:   "[ -x /bin/systemctl ]",
 			Commands: []string{
-				fmt.Sprintf("systemctl enable %s", systemName),
+				// A /run link is cleared each boot, so systemd can never start k3s before this stage renders config.yaml.
+				fmt.Sprintf("systemctl disable %s", systemName),
+				fmt.Sprintf("systemctl enable --runtime %s", systemName),
 				"systemctl daemon-reload",
-				fmt.Sprintf("if systemctl is-active --quiet %s || systemctl show -p ActiveState --value %s | grep -q activating; then systemctl restart %s; else systemctl start %s; fi", systemName, systemName, systemName, systemName),
+				// A node still holding the old persistent link may have auto-started k3s before
+				// this stage rendered config.yaml; start is a no-op on an already-live unit.
+				fmt.Sprintf("if systemctl is-active --quiet %[1]s || systemctl show -p ActiveState --value %[1]s | grep -q activating; then systemctl restart %[1]s; else systemctl start %[1]s; fi", systemName),
 			},
 		},
 	)
