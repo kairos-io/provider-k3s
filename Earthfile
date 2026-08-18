@@ -12,6 +12,7 @@ ARG K3S_VERSION=latest
 ARG BASE_IMAGE_NAME=$(echo $BASE_IMAGE | grep -o [^/]*: | rev | cut -c2- | rev)
 ARG BASE_IMAGE_TAG=$(echo $BASE_IMAGE | grep -o :.* | cut -c2-)
 ARG K3S_VERSION_TAG=$(echo $K3S_VERSION | sed s/+/-/)
+ARG FIPS_ENABLED=false
 
 luet:
     FROM quay.io/luet/base:$LUET_VERSION
@@ -36,10 +37,17 @@ BUILD_GOLANG:
     COPY . ./
     ARG BIN
     ARG SRC
-    ENV CGO_ENABLED=0
     ARG VERSION
     ENV GO_LDFLAGS=" -X github.com/kairos-io/provider-k3s/pkg/version.Version=${VERSION} -w -s"
-    RUN go-build-static.sh -a -o ${BIN} ./${SRC}
+
+    IF $FIPS_ENABLED
+        RUN go-build-fips.sh -a -o ${BIN} ./${SRC}
+        RUN assert-fips.sh ${BIN}
+        RUN assert-static.sh ${BIN}
+    ELSE
+        RUN go-build-static.sh -a -o ${BIN} ./${SRC}
+    END
+
     SAVE ARTIFACT ${BIN} ${BIN} AS LOCAL build/${BIN}
 
 VERSION:
@@ -68,11 +76,22 @@ build-provider:
 
 build-provider-package:
     DO +VERSION
+    ARG TARGETARCH
     ARG VERSION=$(cat VERSION)
     FROM scratch
     COPY +build-provider/agent-provider-k3s /usr/local/system/providers/agent-provider-k3s
     COPY scripts /opt/k3s/scripts
-    SAVE IMAGE --push $IMAGE_REPOSITORY/provider-k3s:${VERSION}
+    SAVE IMAGE --push $IMAGE_REPOSITORY/provider-k3s:${VERSION}-${TARGETARCH}
+
+provider-package-merge:
+    BUILD --platform=linux/amd64 --platform=linux/arm64 +provider-package-pull
+
+provider-package-pull:
+    DO +VERSION
+    ARG VERSION=$(cat VERSION)
+    ARG TARGETARCH
+    FROM ${IMAGE_REPOSITORY}/provider-k3s:${VERSION}-${TARGETARCH}
+    SAVE IMAGE --push ${IMAGE_REPOSITORY}/provider-k3s:${VERSION}
 
 docker:
     DO +VERSION
