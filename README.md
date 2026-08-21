@@ -2,6 +2,11 @@
 
 ---
 
+> [!WARNING]
+> **Community supported.** This provider is moving to its own organization.
+> Until then, open issues on [kairos-io/kairos](https://github.com/kairos-io/kairos/issues)
+> for best effort support.
+
 This provider will configure a k3s installation based on the cluster section of cloud init.
 
 ## Configuration
